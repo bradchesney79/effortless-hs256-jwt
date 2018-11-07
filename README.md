@@ -14,53 +14,53 @@ Allow you to read token claims
 Allow you to validate a token
 Allow you to revoke a token
 
-##Step 1 Install:
+## Step 1 Install:
 
-###Add via composer or git clone or good old cut/paste and require_once()
-
-
-###Edit the config file
+### Add via composer or git clone or good old cut/paste and require_once()
 
 
-###Run the db install script
+### Edit the config file
 
 
-##Step 2 Usage:
+### Run the db install script
 
 
-###Make the code available:
+## Step 2 Usage:
+
+
+### Make the code available:
 
 ```php
 use bradchesney79/ehjwt;
 ```
 
 ```php
-require_once 'path/bradchesney79/ehjwt/Ehjwt.php
+require_once 'path/bradchesney79/ehjwt/Ehjwt.php';
 ```
 
 
-###Create a token:
+### Create a token:
 
 
-###Append to a token:
+### Append to a token:
 
 
-###Edit token claims:
+### Edit token claims:
 
 
-###Remove token claims:
+### Remove token claims:
 
 
-###Get a token string:
+### Get a token string:
 
 
-###Read token claims:
+### Read token claims:
 
 
-###Validate a token:
+### Validate a token:
 
 
-###Revoke a token:
+### Revoke a token:
 
 ToDo:
 
