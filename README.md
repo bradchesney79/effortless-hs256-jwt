@@ -42,25 +42,26 @@ require_once 'path/bradchesney79/ehjwt/Ehjwt.php';
 ### Create a token:
 
 
-### Append to a token:
-
-
-### Edit token claims:
-
-
-### Remove token claims:
-
-
-### Get a token string:
-
-
-### Read token claims:
+### Read the token string:
 
 
 ### Validate a token:
 
 
 ### Revoke a token:
+
+
+### Read token claims:
+
+
+### Edit token claims:
+
+
+### Append/update token claims:
+
+
+### Remove token claims:
+
 
 ToDo:
 
