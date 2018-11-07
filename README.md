@@ -1,6 +1,6 @@
 So, this is a low level library designed to:
 
-- Allow you to specify a conspicuously named ehjwt.php config file
+- Allow you to specify a conspicuously named ehjwt.config.php config file
 - Allow you to set environment variables to specify the encryption key and config file location
 - Allow you to place a config file in common project locations for autoloading
 - Allow you to be confident about settings, my library uses your config file for all configurable values
