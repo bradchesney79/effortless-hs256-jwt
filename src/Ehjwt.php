@@ -1,71 +1,144 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: bchesney
+ * Date: 11/7/18
+ * Time: 3:33 PM
+ */
+
+namespace bradchesney79\ehjwt;
 
 use vlucas\phpdotenv;
 
-class Ehjwt {
+class Ehjwt
+{
 
-private String $token;
+    /**
+     * Issuer
+     *
+     * @var string
+     */
+    private $iss;
+    /**
+     * Subject
+     *
+     * @var string
+     */
+    private $sub;
+    /**
+     * Audience
+     *
+     * @var string
+     */
+    private $aud;
+    /**
+     * Expiration Time
+     *
+     * @var string
+     */
+    private $exp;
+    /**
+     * Not Before
+     *
+     * @var string
+     */
+    private $nbf;
+    /**
+     * Issued At
+     *
+     * @var string
+     */
+    private $iat;
+    /**
+     * JWT ID
+     *
+     * @var string
+     */
+    private $jti;
 
-public function __constructor(String $configPathAndFilename = null) {
-	// load the config file contents from specified location
-	if () {
-		// get config location from $configPathAndFileName
-}
-	else {
-		if () {
-			// get config location from en	
-		}
-		else {
-			// try common locations
+    /**
+     * @var array
+     */
+    private $customClaims;
 
-			// ./Ehjwt.conf.php here
-	
-			// ../Ehjwt.conf.php parent directory
+    /**
+     * @var string
+     */
+    private $token;
 
-			// ./config/Ehjwt.conf.php here/config
+    public function __constructor(String $configPathAndFilename = null)
+    {
+        // load the config file contents from specified location
+        if (
+        $getenv('JWT_CONFIG_FILE')) {
+            // get config location from $configPathAndFileName
+        } else {
+            if () {
+                // get config location from en
+            } else {
+                // try common locations
 
-			// ../config/Ehjwt.conf.php parent/config
+                // ./Ehjwt.conf.php here
 
-			// ??? wordpress
+                // ../Ehjwt.conf.php parent directory
 
-			// project_root/config/Ehjwt.conf.php laravel
+                // ./config/Ehjwt.conf.php here/config
 
-			// ??? drupal
-		}
-	}
-}
+                // ../config/Ehjwt.conf.php parent/config
 
-public function Ehjwt(String $configPathAndFileName = null) {
-	$this->__constructor($configPathAndFileName);
-}
+                // ??? wordpress
+
+                // project_root/config/Ehjwt.conf.php laravel
+
+                // ??? drupal
+            }
+        }
+    }
+
+    public function Ehjwt(String $configPathAndFileName = null)
+    {
+        $this->__constructor($configPathAndFileName);
+    }
 
 // Standard Claims require string parameters on creation
-public function createToken(String $standard_claims) {
-	// create header
-	$header = [
-		'alg' => 'HS256',
-  		'typ' => 'JWT'
-	];
-	// create body
+    public function createToken(String $standard_claims)
+    {
+        // create header
+        $header = [
+            'alg' => 'HS256',
+            'typ' => 'JWT'
+        ];
+        // create body
 
-	// create signature
+        // create signature
+    }
+
+    public function readToken()
+    {
+        return $this->token;
+    }
+
+    public function validateToken() {
+
+    }
+
+    public function revokeToken() {
+
+    }
+
+    // From here out claims are equal, standard and custom have parity
+
+    public function readClaims()
+    {
+
+    }
+
+    public function updateClaims() {
+
+    }
+
+    public function removeClaims(Array $claimKeys)
+    {
+
+    }
 }
-
-public function readToken() {
-	return $this->token;
-}
-
-// From here out claims are equal, standard and custom have parity
-
-public function readClaims(
-
-public function editClaims(Array $claims) {
-
-}
-
-
-
-public function removeClaims(Array $claimKeys) {
-
-}
-
