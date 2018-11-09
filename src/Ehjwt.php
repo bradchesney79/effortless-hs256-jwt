@@ -132,6 +132,7 @@ class Ehjwt
 
         // get the settings from the config file -- "the secretKey"
 
+        //ToDo: get secretKey from config file
         $this->secretKey = 'theValueFromTheConfigFile=getenv(EFFORTLESS_HS256_SECRET_KEY)';
     }
 
@@ -159,13 +160,13 @@ class Ehjwt
             'jti' => $this->jti
         ];
 
-        foreach ($this->customClaims as $key => $value) {
+        foreach (sort($this->customClaims) as $key => $value) {
             if (null !== $value) {
                 $tokenClaims[$key] = $value;
             }
         };
 
-        foreach ($standardClaims as $key => $value) {
+        foreach (sort($standardClaims) as $key => $value) {
             if (null !== $value) {
                 $tokenClaims[$key] = $value;
             }
@@ -180,7 +181,7 @@ class Ehjwt
         // encode the header and claims to Base64Url String
         $base64UrlHeader = $this->base64UrlEncode($jsonHeader);
 
-        $base64UrlClaims = $this->base64UrlEncode($jsonClaims));
+        $base64UrlClaims = $this->base64UrlEncode($jsonClaims);
 
         // create signature
 
@@ -203,33 +204,36 @@ class Ehjwt
     }
 
     public function validateToken(string $tokenString) {
-        
+
         $this->loadToken($tokenString);
-        
-        $this->unpackToken()
 
         if (substr_count($tokenString, '.') !== 2) {
             // 'Incorrect quantity of segments'
             return false;
         }
 
-        $tokenParts = (false !== $this->unpackToken($tokenString))?$this->unpackToken($tokenString):false;
+        $loadedToken = explode('.', $this->token);
+        $loadedTokenUnpackedHeader = json_decode($this->base64UrlDecode($loadedToken[0]), true);
+        $loadedTokenUnpackedBody = json_decode($this->base64UrlDecode($loadedToken[1]), true);
+        $loadedTokenSignature = $loadedToken[2];
 
-        if($tokenParts && is_array($tokenParts)) {
+        $this->unpackToken(true);
+
+        if($loadedTokenUnpackedHeader && is_array($loadedTokenUnpackedHeader)) {
             // 'Cannot unpack the token'
             return false;
         }
 
-        if ($tokenParts['header']['alg'] !== 'HS256') {
+        if ($loadedTokenUnpackedHeader['alg'] !== 'HS256') {
             // 'Wrong algorithm'
             return false;
         }
 
-        $date = new DateTime();
+        $date = new \DateTime('now', 'UTC');
 
         $utcTimeNow = $date->format("U") ;
 
-        $expiryTime = $tokenParts['body']['exp'];
+        $expiryTime = $loadedTokenUnpackedBody['exp'];
 
         // a good JWT integration uses token expiration, I am forcing your hand
         if (($utcTimeNow - $this->exp) > 0 ) {
@@ -237,13 +241,15 @@ class Ehjwt
             return false;
         }
 
-        if ('not before is set...') {
+        // if nbf is set
+        if (null !== $this->nbf) {
             if ($this->nbf < $utcTimeNow) {
                 // 'Too early for not before(nbf) value'
                 return false;
             }
         }
 
+        //ToDo: all the database token stuff
         if ('record for this token in revoked tokens exists') {
             // 'Revoked'
 
@@ -255,14 +261,27 @@ class Ehjwt
             return false;
         }
 
-        if ()
+        $this->createToken();
+
+        // verify the signature
+        $recreatedToken = $this->readToken();
+        $recreatedTokenParts = explode($recreatedToken);
+        $recreatedTokenSignature = $recreatedTokenParts[3];
+
+        if ($recreatedTokenSignature !== $loadedTokenSignature) {
+            // 'signature invalid, potential tampering
+            return false;
+        }
+
+        // the token checks out!
+        return true;
     }
 
     public function revokeToken() {
-
+        //ToDo: add a record for the token jti claim
     }
 
-    public function loadToken(String $tokenString) {
+    public function loadToken(string $tokenString) {
         if ($this->validateToken($tokenString)) {
             $this->token = $tokenString;
         }
@@ -273,12 +292,36 @@ class Ehjwt
     public function readClaims()
     {
         $this->unpackToken($this->token);
-        return $this->customClaims;
+
+        $standardClaims  = [
+            'iss' => $this->iss,
+            'sub' => $this->sub,
+            'aud' => $this->aud,
+            'exp' => $this->exp,
+            'nbf' => $this->nbf,
+            'iat' => $this->iat,
+            'jti' => $this->jti
+        ];
+
+        $allClaims = array_merge($standardClaims, $this->$standardClaims);
+        return $allClaims;
     }
 
-    public function updateClaims(Array $updatedClaims, Boolean ) {
-        $startingClaims = $this->readClaims();
-        //$adjustedClaims = array_merge($startingClaims, $updateClaims);
+    public function updateClaims(Array $updatedClaims, bool $clearClaimsFirst) {
+        if ($clearClaimsFirst === true) {
+            $this->clearClaims();
+        }
+
+        foreach ($updatedClaims as $claimKey => $value) {
+            if ($claimKey === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
+                $this[$claimKey] = $value;
+            }
+            else {
+                $this->customClaims[$claimKey] = $value;
+            }
+        }
+
+        $this->createToken();
     }
 
     // can only directly remove custom claims
@@ -286,11 +329,11 @@ class Ehjwt
     public function removeClaims(Array $claimKeys)
     {
         foreach ($claimKeys as $claimKey) {
-            if ($key === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
-                $this[$key] = null;
+            if ($claimKey === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
+                $this[$claimKey] = null;
             }
             else {
-                $this->customClaims[$key] = null;
+                $this->customClaims[$claimKey] = null;
             }
         }
 
@@ -310,22 +353,26 @@ class Ehjwt
         return hash_hmac('sha256', $base64UrlHeader . '.' . $base64UrlClaims, $this->secretKey, true);
     }
 
-    private function unpackToken(bool $clearClaimsFirst = false) {
-        
-        if ($clearClaimsFirst === true) {
-            $this->iss = null;
-            $this->sub = null;
-            $this->aud = null;
-            $this->exp = null;
-            $this->nbf = null;
-            $this->iat = null;
-            $this->jti = null;
+    private function clearClaims () {
+        $this->iss = null;
+        $this->sub = null;
+        $this->aud = null;
+        $this->exp = null;
+        $this->nbf = null;
+        $this->iat = null;
+        $this->jti = null;
 
-            $this->customClaims = [];
+        $this->customClaims = [];
+    }
+
+    private function unpackToken(bool $clearClaimsFirst = true) {
+
+        if ($clearClaimsFirst === true) {
+            $this->clearClaims();
         }
 
         $tokenParts = explode('.', $this->token);
-        $tokenClaims = json_decode($this->base64UrlDecode($tokenParts[1]));
+        $tokenClaims = json_decode($this->base64UrlDecode($tokenParts[1]), true);
         foreach ($tokenClaims as $key => $value) {
             if ($key === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
                 $this[$key] = $value;
