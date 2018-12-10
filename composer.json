@@ -1,0 +1,26 @@
+{
+    "name": "bradchesney79/effortless-hs256-jwt",
+    "description": "A tool to create the skeleton of an app from a detailed source object.",
+    "type": "project",
+    "require": {
+        "vlucas/phpdotenv": ">=2.5.1"
+    },
+    "authors": [
+        {
+            "name": "BradChesney79",
+            "email": "bradchesney79@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "bradchesney79\\EHS256JWT\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+
+            "bradchesney79\\EHS256JWT\\Test\\": "test/"
+        }
+    },
+    "minimum-stability": "stable"
+}

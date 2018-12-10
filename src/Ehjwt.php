@@ -6,7 +6,7 @@
  * Time: 3:33 PM
  */
 
-namespace bradchesney79\ehjwt;
+namespace bradchesney79\EHS256JWT;
 
 use Dotenv\Dotenv;
 
@@ -71,7 +71,7 @@ class Ehjwt
      */
     private $token;
 
-    public function __constructor(String $configPathWithoutTrailingSlash = null, String $configFileName = 'ehjwt.conf.php')
+    public function __constructor(String $configFileName = 'ehjwt.conf.php', String $configPathWithoutTrailingSlash = null)
     {
         // load the config file contents from specified location
         if (null !== $configPathWithoutTrailingSlash) {
@@ -133,7 +133,7 @@ class Ehjwt
         // get the settings from the config file -- "the secretKey"
 
         //ToDo: get secretKey from config file
-        $this->secretKey = 'theValueFromTheConfigFile=getenv(EFFORTLESS_HS256_SECRET_KEY)';
+        $this->secretKey = getenv('EFFORTLESS_HS256_SECRET_KEY');
     }
 
     public function Ehjwt(String $configPathAndFileName = null)
@@ -313,8 +313,9 @@ class Ehjwt
         }
 
         foreach ($updatedClaims as $claimKey => $value) {
-            if ($claimKey === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
-                $this[$claimKey] = $value;
+            if ( in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true ) ) {
+            //if ($claimKey === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
+                $this->{$claimKey} = $value;
             }
             else {
                 $this->customClaims[$claimKey] = $value;
