@@ -6,7 +6,7 @@
  * Time: 3:33 PM
  */
 
-namespace bradchesney79\EHS256JWT;
+namespace bradchesney79;
 
 use Dotenv\Dotenv;
 
@@ -71,6 +71,13 @@ class Ehjwt
      */
     private $token;
 
+    public function enableTestingPrivateSecretKeyProperty() {
+        if (!is_null(getenv('APP_ENV')) && getenv('APP_ENV') != "prod") {
+            return array($this->secretKey);
+        }
+        return;
+    }
+
     public function __constructor(String $configFileName = 'ehjwt.conf.php', String $configPathWithoutTrailingSlash = null)
     {
         // load the config file contents from specified location
@@ -123,6 +130,8 @@ class Ehjwt
                 }
             }
             // ??? drupal
+
+            //ToDo: check for already loaded .env file value...
         }
 
         // load the configuration settings

@@ -63,6 +63,14 @@ require_once 'path/bradchesney79/ehjwt/Ehjwt.php';
 ### Remove token claims:
 
 
+## Step A Test:
+
+Run the tests with the PHPUnit installed in the dev dependencies
+
+```php
+./vendor/bin/phpunit 
+```
+
 ToDo:
 
 Write the token creation code

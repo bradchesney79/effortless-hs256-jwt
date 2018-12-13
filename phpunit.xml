@@ -1,0 +1,55 @@
+<phpunit
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/|version|/phpunit.xsd"
+   backupGlobals="true"
+   backupStaticAttributes="false"
+   bootstrap="vendor/autoload.php"
+   cacheResult="false"
+   cacheTokens="false"
+   colors="true"
+   convertErrorsToExceptions="true"
+   convertNoticesToExceptions="true"
+   convertWarningsToExceptions="true"
+   forceCoversAnnotation="false"
+testSuiteLoaderFile="./vendor/phpunit/phpunit/PHPUnit/Runner/StandardTestSuiteLoader.php"
+   processIsolation="true"
+   stopOnError="false"
+   stopOnFailure="false"
+   stopOnIncomplete="false"
+   stopOnSkipped="false"
+   stopOnRisky="false"
+
+   timeoutForSmallTests="1"
+   timeoutForMediumTests="10"
+   timeoutForLargeTests="60"
+   verbose="true"
+>
+   <!-- ... -->
+  <testsuites>
+    <testsuite name="unit">
+      <directory suffix="Test.php">tests/unit</directory>
+    </testsuite>
+
+    <testsuite name="Unit">
+      <directory suffix="Test.php">./tests/Unit</directory>
+    </testsuite>
+
+    <testsuite name="Feature">
+         <directory suffix="Test.php">./tests/Feature</directory>
+    </testsuite>
+  </testsuites>
+  <php>
+    <env name="APP_ENV" value="testing"/>
+  </php>
+  <filter>
+    <whitelist processUncoveredFilesFromWhitelist="true">
+      <directory suffix=".php">src</directory>
+    </whitelist>
+  </filter>
+</phpunit>
+<!--
+   testSuiteLoaderClass="PHPUnit\Runner\StandardTestSuiteLoader"
+   printerClass="PHPUnit\TextUI\ResultPrinter"
+   printerFile="/path/to/ResultPrinter.php"
+   testSuiteLoaderFile="/path/to/StandardTestSuiteLoader.php"
+-->
