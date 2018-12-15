@@ -9,20 +9,19 @@
         }
     ],
     "require": {
-        "vlucas/phpdotenv": ">=2.5.1"
     },
         "require-dev": {
         "phpunit/phpunit": "^7"
     },
     "autoload": {
         "psr-4": {
-            "bradchesney79\\EHS256JWT\\": "src/"
+            "bradchesney79\\Ehjwt\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
 
-            "bradchesney79\\EHS256JWT\\Test\\": "test/"
+            "bradchesney79\\Ehjwt\\Test\\": "tests/"
 
         }
     },
