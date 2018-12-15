@@ -3,6 +3,7 @@
    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/|version|/phpunit.xsd"
    backupGlobals="true"
    backupStaticAttributes="false"
+   beStrictAboutOutputDuringTests="false"
    bootstrap="vendor/autoload.php"
    cacheResult="false"
    cacheTokens="false"
@@ -11,7 +12,7 @@
    convertNoticesToExceptions="true"
    convertWarningsToExceptions="true"
    forceCoversAnnotation="false"
-testSuiteLoaderFile="./vendor/phpunit/phpunit/PHPUnit/Runner/StandardTestSuiteLoader.php"
+   testSuiteLoaderFile="./vendor/phpunit/phpunit/PHPUnit/Runner/StandardTestSuiteLoader.php"
    processIsolation="true"
    stopOnError="false"
    stopOnFailure="false"
@@ -40,12 +41,10 @@ testSuiteLoaderFile="./vendor/phpunit/phpunit/PHPUnit/Runner/StandardTestSuiteLo
   </testsuites>
   <php>
     <env name="APP_ENV" value="testing"/>
+    <ini name="display_errors" value="On" />
+    <ini name="display_startup_errors" value="On" />
   </php>
-  <filter>
-    <whitelist processUncoveredFilesFromWhitelist="true">
-      <directory suffix=".php">src</directory>
-    </whitelist>
-  </filter>
+
 </phpunit>
 <!--
    testSuiteLoaderClass="PHPUnit\Runner\StandardTestSuiteLoader"
