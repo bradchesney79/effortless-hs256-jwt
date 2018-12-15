@@ -5,7 +5,8 @@
         "authors": [
         {
             "name": "BradChesney79",
-            "email": "bradchesney79@gmail.com"
+            "email": "bradchesney79@gmail.com",
+            "role": "developer"
         }
     ],
     "require": {
@@ -25,5 +26,6 @@
 
         }
     },
+    "license": "Unlicense",
     "minimum-stability": "stable"
 }
