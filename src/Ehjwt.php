@@ -8,8 +8,6 @@
 
 namespace bradchesney79;
 
-use Dotenv\Dotenv;
-
 class Ehjwt
 {
 
@@ -59,99 +57,27 @@ class Ehjwt
     /**
      * @var array
      */
-    private $customClaims  = null;
+    private $customClaims = null;
 
     /**
      * @var string
      */
-    private $secretKey  = null;
+    private $secretKey = null;
 
     /**
      * @var string
      */
-    private $token;
+    private $token = null;
 
-    public function enableTestingPrivateSecretKeyProperty() {
-        if (!is_null(getenv('APP_ENV')) && getenv('APP_ENV') != "prod") {
-            return array($this->secretKey);
-        }
-        return;
+    public function __construct(string $secret) {
+        $this->secretKey = $secret;
     }
 
-    public function __constructor(String $configFileName = 'ehjwt.conf.php', String $configPathWithoutTrailingSlash = null)
-    {
-        // load the config file contents from specified location
-        if (null !== $configPathWithoutTrailingSlash) {
-            // get config location from $configPathAndFileName
-                $configPath = $configPathWithoutTrailingSlash;
-        }
-        else {
-
-            // try common locations
-
-            // ./Ehjwt.conf.php here
-
-            if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . $configFileName)) {
-
-                $configPathWithoutTrailingSlash = __DIR__;
-
-            }
-
-            // ../Ehjwt.conf.php parent directory
-
-            if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . $configFileName)) {
-
-                $configPathWithoutTrailingSlash = __DIR__ . DIRECTORY_SEPARATOR . '..';
-
-            }
-
-            // ./config/Ehjwt.conf.php here/config
-
-            if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . $configFileName)) {
-
-                $configPathWithoutTrailingSlash = __DIR__ . DIRECTORY_SEPARATOR . 'config';
-
-            }
-
-            // ../config/Ehjwt.conf.php parent/config
-
-            if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . $configFileName)) {
-
-                $configPathWithoutTrailingSlash = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'config';
-            }
-
-            // ??? wordpress
-
-            // project_root/config/Ehjwt.conf.php laravel
-
-            if (function_exists(base_path())) {
-                if (file_exists(base_path() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . $configFileName)) {
-                    $configPathWithoutTrailingSlash = base_path() . DIRECTORY_SEPARATOR . 'config';
-                }
-            }
-            // ??? drupal
-
-            //ToDo: check for already loaded .env file value...
-        }
-
-        // load the configuration settings
-
-        $dotenv = new Dotenv($configPathWithoutTrailingSlash . DIRECTORY_SEPARATOR, $configFileName);
-        $dotenv->load();
-
-        // get the settings from the config file -- "the secretKey"
-
-        //ToDo: get secretKey from config file
-        $this->secretKey = getenv('EFFORTLESS_HS256_SECRET_KEY');
+    public function Ehjwt(string $secret) {
+        $this->__construct($secret);
     }
 
-    public function Ehjwt(String $configPathAndFileName = null)
-    {
-        $this->__constructor($configPathAndFileName);
-    }
-
-    public function createToken()
-    {
+    public function createToken() {
         // create header
         $header = [
             'alg' => 'HS256',
