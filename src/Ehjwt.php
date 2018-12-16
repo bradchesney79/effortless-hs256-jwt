@@ -301,6 +301,39 @@ class Ehjwt
         $this->customClaims = [];
     }
 
+    public function setStandardClaims(array $standardClaims) {
+        foreach ($standardClaims as $claimKey => $value) {
+            if (in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true )) {
+                $this->{$claimKey} = $value;
+            }
+
+            else {
+                $this->{$claimKey} = null;
+            }
+        }
+    }
+
+    public function setStandardClaims(array $customClaims) {
+        foreach ($customClaims as $claimKey => $value) {
+            $this->customClaims[$claimKey] = $value;
+        }
+    }
+
+    public function deleteStandardardClaims(array $standardClaimNamesCommaSeparated) {
+        $standardClaims = explode(',', $standardClaimNamesCommaSeparated);
+        foreach ($standardClaims as $claimKey) {
+            $this->{$claimKey} = null;
+        }
+    }
+
+
+    public function deleteCustomClaims(array $customClaimNamesCommaSeparated) {
+        $customClaims = explode(',', $customClaimNamesCommaSeparated);
+        foreach ($customClaims as $claimKey) {
+            $this->customClaims[$claimKey] = null;
+        }
+    }
+
     private function unpackToken(bool $clearClaimsFirst = true) {
 
         if ($clearClaimsFirst === true) {
@@ -310,8 +343,9 @@ class Ehjwt
         $tokenParts = explode('.', $this->token);
         $tokenClaims = json_decode($this->base64UrlDecode($tokenParts[1]), true);
         foreach ($tokenClaims as $key => $value) {
+            // ToDo: in array this...
             if ($key === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
-                $this[$key] = $value;
+                $this->{$key} = $value;
             }
             else {
                 $this->customClaims[$key] = $value;
