@@ -19,7 +19,7 @@ class ehjwtTest extends TestCase
     	$secret = 'secret';
 
 		$reflectionClass = new ReflectionClass('bradchesney79\Ehjwt');
-		$reflectionProperty = $reflectionClass->getProperty('secretKey');
+		$reflectionProperty = $reflectionClass->getProperty('jwtSecret');
 		$reflectionProperty->setAccessible(true);
 
 		// Check that the secret is set by the __construct function
@@ -152,74 +152,51 @@ class ehjwtTest extends TestCase
 
     public function testEnvironmentVarsLoad() {
 
-    	if (getenv('ESJWT_DSN')) {
+    	//$dsn = addslashes(mysql:host=localhost);
+		$dsn = 'mysql:host=localhost';
 
-            $this->config['dsn'] = getenv('ESJWT_DSN')
+    	putenv('ESJWT_DSN=' . $dsn);
 
-        }
+        putenv('ESJWT_DB_USER=root');
 
-        if (getenv('ESJWT_DB_USER')) {
+        putenv('ESJWT_DB_PASS=password');
 
-            $this->config['dbUser'] = getenv('ESJWT_DB_USER')
+        putenv('ESJWT_JWT_SECRET=secrets');
 
-        }
+        putenv('ESJWT_ISS=rustbeltrebellion.com');
 
-        if (getenv('ESJWT_DB_PASS')) {
+        putenv('ESJWT_AUD=list255.com');
 
-            $this->config['dbPassword'] = getenv('ESJWT_DB_PASS');
+        $now = time();
+		$expires = time() + 30 * 60;
 
-        }
+		$jwt = new Ehjwt(null, "NonExistentFile");
 
-        if (getenv('ESJWT_JWT_SECRET')) {
+		$standardClaims = array(
+	        'sub'=>'15448979450000000000',
+	        'exp'=>"$expires",
+	        'nbf'=>"$now",
+	        'iat'=>"$now",
+	        'jti'=>'1234567890'
+		);
+		$jwt->setStandardClaims($standardClaims);
 
-            $this->jwtSecret = getenv('ESJWT_JWT_SECRET');
-
-        }
-
-        if (getenv('ESJWT_ISS')) {
-
-            $this->iss = getenv('ESJWT_ISS');
-
-        }
-
-        if (getenv('ESJWT_AUD')) {
-
-            $this->aud = getenv('ESJWT_AUD');
-
-        }
+		$claims = $jwt->getClaims();
 
         $checkValues = [];
 
 	    $checkValues['iss'] = 'rustbeltrebellion.com';
-	    $checkValues['sub'] = '15448979450000000000';
-	    $checkValues['aud'] = 'rustbeltrebellion.com';
-	    $checkValues['exp'] = $expires;
-	    $checkValues['nbf'] = $now;
-	    $checkValues['iat'] = $now;
-	    $checkValues['jti'] = '1234567890';
-	    $checkValues['age'] = '39';
-	    $checkValues['location'] = 'Davenport, Iowa';
-	    $checkValues['sex'] = 'male';
-	    // ToDo: populate this variable
-	    $checkValues['config'] = '';
-	    ksort($checkValues['config']);
+	    $checkValues['aud'] = 'list255.com';
+
 
 	    $this->assertEquals($claims['iss'], $checkValues['iss']);
-	    $this->assertEquals($claims['sub'], $checkValues['sub']);
 	    $this->assertEquals($claims['aud'], $checkValues['aud']);
-	    $this->assertEquals($claims['exp'], $checkValues['exp']);
-	    $this->assertEquals($claims['nbf'], $checkValues['nbf']);
-	    $this->assertEquals($claims['iat'], $checkValues['iat']);
-	    $this->assertEquals($claims['jti'], $checkValues['jti']);
-	    $this->assertEquals($claims['age'], $checkValues['age']);
-	    $this->assertEquals($claims['location'], $checkValues['location']);
-	    $this->assertEquals($claims['sex'], $checkValues['sex']);
     }
 
-    public function testConfigFileVarsLoad() {
-		$secret = 'secret';
+ //    public function testConfigFileVarsLoad() {
+	// 	$secret = 'secret';
 
-    	$jwt = new Ehjwt($secret);
+ //    	$jwt = new Ehjwt($secret);
 
-	}
+	// }
 }
