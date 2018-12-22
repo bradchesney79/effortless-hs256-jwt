@@ -1,3 +1,5 @@
+<?php
+
 // This package uses, in most cases, a DB table to deny authorization for revoked, unexpired tokens.
 
 // Please provide the connection details. Help me, help you...
@@ -31,7 +33,13 @@ return [
 
 	'password' => null,
 
-	'jwtSecret' => null
+	'jwtSecret' => null,
+
+	// the issuer
+	'iss' => null,
+	
+	// the audience
+	'aud' => null
 
 ];
 
