@@ -144,25 +144,31 @@ class Ehjwt
         // load configuration from a config file
 
         if (is_null($file)) {
-            $this->file = __DIR__.'/../config/ehjwt-conf.php'
+            $this->file = __DIR__.'/../config/ehjwt-conf.php';
         }
         else {
             $this->file = $file;
         }
 
-        // Check for config file
-        if (file_exists($this->file) {
+        // check for config file existing before actual load
+        if (file_exists($this->file)) {
             $this->config[] = require $this->file;
         }
 
         // load the jwtSecret from the passed argument string
 
-        if (is_null($secret) && empty($this->jwtSecret)) {
-            $this->jwtSecret = $this->config['jwtSecret'];
-        }
-        else {
+        if (isset($secret)) {
             $this->jwtSecret = $secret;
         }
+        else {
+            if (isset($this->jwtSecret)) {
+                //just use the env var secret
+            }
+            else {
+                $this->jwtSecret = $this->config['jwtSecret'];
+            }
+        }
+
     }
 
     public function Ehjwt(string $secret = null, string $file = null) {
@@ -219,7 +225,7 @@ class Ehjwt
 
         $jsonClaims = json_encode($tokenClaims,JSON_FORCE_OBJECT);
 
-        // encode the header and claims to Base64Url String
+        // encode the header and claims to base64url string
         $base64UrlHeader = $this->base64UrlEncode($jsonHeader);
 
         $base64UrlClaims = $this->base64UrlEncode($jsonClaims);
@@ -228,7 +234,7 @@ class Ehjwt
 
         $jsonSignature = $this->makeHmacHash($base64UrlHeader, $base64UrlClaims);
 
-        // Encode Signature to Base64Url String
+        // encode signature to base64url string
         $base64UrlSignature = $this->base64UrlEncode($jsonSignature);
 
         $tokenParts = array($base64UrlHeader, $base64UrlClaims, $base64UrlSignature);
@@ -348,6 +354,10 @@ class Ehjwt
             'iat' => $this->iat,
             'jti' => $this->jti
         ];
+
+        if($this->customClaims === null) {
+            $this->customClaims = array();
+        }
 
         $allClaims = array_merge($standardClaims, $this->customClaims);
         return $allClaims;
