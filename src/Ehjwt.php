@@ -10,6 +10,18 @@ namespace bradchesney79;
 
 class Ehjwt
 {
+    /*
+    iss: issuer, the website that issued the token
+    sub: subject, the id of the entity being granted the token 
+        (int has an unsigned, numeric limit of 4294967295)
+        (bigint has an unsigned, numeric limit of 18446744073709551615)
+        (unix epoch as of "now" 1544897945)
+    aud: audience, the users of the token-- generally a url or string
+    exp: expires, the UTC UNIX epoch time stamp of when the token is no longer valid
+    nbf: not before, the UTC UNIX epoch time stamp of when the token becomes valid
+    iat: issued at, the UTC UNIX epoch time stamp of when the token was issued
+    jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation 
+    */
 
     /**
      * Issuer
@@ -69,12 +81,46 @@ class Ehjwt
      */
     private $token = null;
 
-    public function __construct(string $secret) {
-        $this->secretKey = $secret;
+    /**
+     * The config file path.
+     *
+     * @var string
+     */
+    protected $file;
+
+    /**
+     * The config data.
+     *
+     * @var array
+     */
+    protected $config = [];
+
+    public function __construct(string $secret = null, string $file = __DIR__.'/../config/ehjwt-conf.php') {
+
+        $this->config = require $this->file;
+
+        if (!is_null($secret)) {
+            $this->secretKey = $secret;
+        }
+        else {
+            $this->secretKey = $this->config
+        }
     }
 
-    public function Ehjwt(string $secret) {
+    public function Ehjwt(string $secret = null) {
         $this->__construct($secret);
+    }
+
+
+
+    /**
+     * Load the configuration file.
+     *
+     * @return void
+     */
+    protected function load()
+    {
+        $this->config = require $this->file;
     }
 
     public function createToken() {
@@ -86,22 +132,24 @@ class Ehjwt
         // create body
 
         $standardClaims  = [
-            'iss' => $this->iss,
-            'sub' => $this->sub,
             'aud' => $this->aud,
             'exp' => $this->exp,
-            'nbf' => $this->nbf,
             'iat' => $this->iat,
-            'jti' => $this->jti
+            'iss' => $this->iss,
+            'jti' => $this->jti,
+            'nbf' => $this->nbf,
+            'sub' => $this->sub
         ];
 
-        foreach (sort($this->customClaims) as $key => $value) {
+        ksort($this->customClaims);
+
+        foreach ($this->customClaims as $key => $value) {
             if (null !== $value) {
                 $tokenClaims[$key] = $value;
             }
         };
 
-        foreach (sort($standardClaims) as $key => $value) {
+        foreach ($standardClaims as $key => $value) {
             if (null !== $value) {
                 $tokenClaims[$key] = $value;
             }
@@ -132,41 +180,47 @@ class Ehjwt
         return $this->token;
     }
 
-    public function readToken()
+    public function getToken()
     {
         $this->createToken();
         return $this->token;
     }
 
-    public function validateToken(string $tokenString) {
+    public static function validateToken(string $tokenString) {
 
-        $this->loadToken($tokenString);
+        $tokenParts = explode('.', $tokenString);
 
-        if (substr_count($tokenString, '.') !== 2) {
+        if (3 !== count($tokenParts)) {
             // 'Incorrect quantity of segments'
             return false;
         }
 
-        $loadedToken = explode('.', $this->token);
-        $loadedTokenUnpackedHeader = json_decode($this->base64UrlDecode($loadedToken[0]), true);
-        $loadedTokenUnpackedBody = json_decode($this->base64UrlDecode($loadedToken[1]), true);
-        $loadedTokenSignature = $loadedToken[2];
-
-        $this->unpackToken(true);
-
-        if($loadedTokenUnpackedHeader && is_array($loadedTokenUnpackedHeader)) {
-            // 'Cannot unpack the token'
+        try {
+            $unpackedTokenHeader = json_decode($this->base64UrlDecode($tokenParts[0]), true);
+        }
+        catch {
+            // 'Header does not decode'
             return false;
         }
 
-        if ($loadedTokenUnpackedHeader['alg'] !== 'HS256') {
+        try {
+            $unpackedTokenBody = json_decode($this->base64UrlDecode($tokenParts[1]), true);
+        }
+        catch {
+            // 'Body does not decode'
+            return false;
+        }
+
+        $unpackedTokenSignature = $tokenParts[2];
+
+        if ($unpackedTokenHeader['alg'] !== 'HS256') {
             // 'Wrong algorithm'
             return false;
         }
 
         $date = new \DateTime('now', 'UTC');
 
-        $utcTimeNow = $date->format("U") ;
+        $utcTimeNow = $date->format("U");
 
         $expiryTime = $loadedTokenUnpackedBody['exp'];
 
@@ -217,16 +271,15 @@ class Ehjwt
     }
 
     public function loadToken(string $tokenString) {
-        if ($this->validateToken($tokenString)) {
-            $this->token = $tokenString;
-        }
+        $this->token = $tokenString;
+        $this->unpackToken();
     }
 
     // From here out claims are equal, standard and custom have parity
 
-    public function readClaims()
+    public function getClaims()
     {
-        $this->unpackToken($this->token);
+        //$this->unpackToken($this->token);
 
         $standardClaims  = [
             'iss' => $this->iss,
@@ -238,42 +291,8 @@ class Ehjwt
             'jti' => $this->jti
         ];
 
-        $allClaims = array_merge($standardClaims, $this->$standardClaims);
+        $allClaims = array_merge($standardClaims, $this->customClaims);
         return $allClaims;
-    }
-
-    public function updateClaims(Array $updatedClaims, bool $clearClaimsFirst) {
-        if ($clearClaimsFirst === true) {
-            $this->clearClaims();
-        }
-
-        foreach ($updatedClaims as $claimKey => $value) {
-            if ( in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true ) ) {
-            //if ($claimKey === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
-                $this->{$claimKey} = $value;
-            }
-            else {
-                $this->customClaims[$claimKey] = $value;
-            }
-        }
-
-        $this->createToken();
-    }
-
-    // can only directly remove custom claims
-    // edit standard claims to equal null to remove them
-    public function removeClaims(Array $claimKeys)
-    {
-        foreach ($claimKeys as $claimKey) {
-            if ($claimKey === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
-                $this[$claimKey] = null;
-            }
-            else {
-                $this->customClaims[$claimKey] = null;
-            }
-        }
-
-        $this->createToken();
     }
 
     private function base64UrlEncode(string $unencodedString) {
@@ -289,7 +308,7 @@ class Ehjwt
         return hash_hmac('sha256', $base64UrlHeader . '.' . $base64UrlClaims, $this->secretKey, true);
     }
 
-    private function clearClaims () {
+    public function clearClaims () {
         $this->iss = null;
         $this->sub = null;
         $this->aud = null;
@@ -303,23 +322,27 @@ class Ehjwt
 
     public function setStandardClaims(array $standardClaims) {
         foreach ($standardClaims as $claimKey => $value) {
-            if (in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true )) {
-                $this->{$claimKey} = $value;
-            }
+            if ($value != null) {
+                if (in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true )) {
+                    $this->{$claimKey} = $value;
+                }
 
-            else {
-                $this->{$claimKey} = null;
+                else {
+                    $this->{$claimKey} = null;
+                }
             }
         }
     }
 
-    public function setStandardClaims(array $customClaims) {
+    public function setCustomClaims(array $customClaims) {
         foreach ($customClaims as $claimKey => $value) {
-            $this->customClaims[$claimKey] = $value;
+            if ($value != null) {
+                $this->customClaims[$claimKey] = $value;
+            }
         }
     }
 
-    public function deleteStandardardClaims(array $standardClaimNamesCommaSeparated) {
+    public function deleteStandardClaims(string $standardClaimNamesCommaSeparated) {
         $standardClaims = explode(',', $standardClaimNamesCommaSeparated);
         foreach ($standardClaims as $claimKey) {
             $this->{$claimKey} = null;
@@ -327,7 +350,7 @@ class Ehjwt
     }
 
 
-    public function deleteCustomClaims(array $customClaimNamesCommaSeparated) {
+    public function deleteCustomClaims(string $customClaimNamesCommaSeparated) {
         $customClaims = explode(',', $customClaimNamesCommaSeparated);
         foreach ($customClaims as $claimKey) {
             $this->customClaims[$claimKey] = null;
@@ -342,13 +365,13 @@ class Ehjwt
 
         $tokenParts = explode('.', $this->token);
         $tokenClaims = json_decode($this->base64UrlDecode($tokenParts[1]), true);
-        foreach ($tokenClaims as $key => $value) {
+        foreach ($tokenClaims as $claimKey => $value) {
             // ToDo: in array this...
-            if ($key === 'iss' || 'sub' || 'aud' || 'exp' || 'nbf' || 'iat' || 'jti') {
-                $this->{$key} = $value;
+            if (in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true )) {
+                $this->{$claimKey} = $value;
             }
             else {
-                $this->customClaims[$key] = $value;
+                $this->customClaims[$claimKey] = $value;
             }
         }
     }
