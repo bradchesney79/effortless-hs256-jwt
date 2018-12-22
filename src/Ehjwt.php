@@ -74,7 +74,7 @@ class Ehjwt
     /**
      * @var string
      */
-    private $secretKey = null;
+    private $jwtSecret = null;
 
     /**
      * @var string
@@ -95,15 +95,60 @@ class Ehjwt
      */
     protected $config = [];
 
-    public function __construct(string $secret = null, string $file = __DIR__.'/../config/ehjwt-conf.php') {
+    public function __construct(string $secret = null, string $file = null) {
 
-        $this->config = require $this->file;
+        // load configuration from environment variables
+
+        if (getenv('ESJWT_DSN')) {
+
+            $this->config['dsn'] = getenv('ESJWT_DSN')
+
+        }
+
+        if (getenv('ESJWT_DB_USER')) {
+
+            $this->config['dbUser'] = getenv('ESJWT_DB_USER')
+
+        }
+
+        if (getenv('ESJWT_DB_PASS')) {
+
+            $this->config['dbPassword'] = getenv('ESJWT_DB_PASS');
+
+        }
+
+        if (getenv('ESJWT_JWT_SECRET')) {
+
+            $this->jwtSecret = getenv('ESJWT_JWT_SECRET');
+
+        }
+
+        if (getenv('ESJWT_ISS')) {
+
+            $this->iss = getenv('ESJWT_ISS');
+
+        }
+
+        if (getenv('ESJWT_AUD')) {
+
+            $this->aud = getenv('ESJWT_AUD');
+
+        }
+
+
+        // load configuration from a config file
+
+        $this->file = $file;
+
+        $this->config[] = require $this->file;
+
+        // load the jwtSecret from the passed argument string
 
         if (!is_null($secret)) {
-            $this->secretKey = $secret;
+            $this->jwtSecret = $secret;
         }
         else {
-            $this->secretKey = $this->config
+            $this->jwtSecret = $this->config['jwtSecret'];
         }
     }
 
@@ -198,7 +243,7 @@ class Ehjwt
         try {
             $unpackedTokenHeader = json_decode($this->base64UrlDecode($tokenParts[0]), true);
         }
-        catch {
+        catch (exception $e) {
             // 'Header does not decode'
             return false;
         }
@@ -206,7 +251,7 @@ class Ehjwt
         try {
             $unpackedTokenBody = json_decode($this->base64UrlDecode($tokenParts[1]), true);
         }
-        catch {
+        catch (exception $e) {
             // 'Body does not decode'
             return false;
         }
@@ -305,7 +350,7 @@ class Ehjwt
 
     private function makeHmacHash(string $base64UrlHeader, string $base64UrlClaims) {
         // sha256 is the only algorithm. sorry, not sorry.
-        return hash_hmac('sha256', $base64UrlHeader . '.' . $base64UrlClaims, $this->secretKey, true);
+        return hash_hmac('sha256', $base64UrlHeader . '.' . $base64UrlClaims, $this->jwtSecret, true);
     }
 
     public function clearClaims () {
