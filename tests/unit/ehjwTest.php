@@ -22,6 +22,7 @@ class ehjwtTest extends TestCase
 		$reflectionProperty = $reflectionClass->getProperty('secretKey');
 		$reflectionProperty->setAccessible(true);
 
+		// Check that the secret is set by the __construct function
 		$this->assertEquals($secret, $reflectionProperty->getValue(new Ehjwt('secret')));
     }
 
@@ -58,9 +59,100 @@ class ehjwtTest extends TestCase
 		);
 		$jwt->setStandardClaims($standardClaims);
 
-		var_dump($jwt);
+		$customClaims = array(
+			'age' => '39',
+			'sex' => 'male',
+			'location' => 'Davenport, Iowa'
+		);
 
-		//$this->assertEquals($secret, $reflectionProperty->getValue(new Ehjwt('secret')));
-        $this->assertTrue(true);
+		$jwt->setCustomClaims($customClaims);
+
+		// $jwt->deleteStandardClaims('aud');
+
+		// $jwt->deleteCustomClaims('location');
+
+		$jwt->createToken();
+
+		$expectedAlgorithmChunk = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+
+		$jwtChunks = explode('.',$jwt->getToken());
+
+		$jwtChunksCount = count($jwtChunks);
+
+		$actualAlgorithmChunk = $jwtChunks[0];
+
+		// Check that there are three parts to the JWT
+		$this->assertEquals(3, $jwtChunksCount);
+
+		// Check that the algorithm chunk is predictably HS256
+		$this->assertEquals($expectedAlgorithmChunk, $actualAlgorithmChunk);
     }
+
+    public function testLoadToken() {
+    	    	$secret = 'secret';
+
+		$jwt = new Ehjwt($secret);
+
+		$now = time();
+		$expires = time() + 30 * 60;
+
+/*
+
+*/
+
+		$standardClaims = array(
+	        'iss'=>'rustbeltrebellion.com',
+	        'sub'=>'15448979450000000000',
+	        'aud'=>'rustbeltrebellion.com',
+	        'exp'=>"$expires",
+	        'nbf'=>"$now",
+	        'iat'=>"$now",
+	        'jti'=>'1234567890'
+		);
+		$jwt->setStandardClaims($standardClaims);
+
+		$customClaims = array(
+			'age' => '39',
+			'sex' => 'male',
+			'location' => 'Davenport, Iowa'
+		);
+
+		$jwt->setCustomClaims($customClaims);
+
+		$jwt->createToken();
+
+		$token = $jwt->getToken();
+
+		$newJwt = new Ehjwt('secret');
+
+		$newJwt->loadToken($token);
+
+		$claims = $newJwt->getClaims();
+
+		$checkValues = [];
+
+	    $checkValues['iss'] = 'rustbeltrebellion.com';
+	    $checkValues['sub'] = '15448979450000000000';
+	    $checkValues['aud'] = 'rustbeltrebellion.com';
+	    $checkValues['exp'] = $expires;
+	    $checkValues['nbf'] = $now;
+	    $checkValues['iat'] = $now;
+	    $checkValues['jti'] = '1234567890';
+	    $checkValues['age'] = '39';
+	    $checkValues['location'] = 'Davenport, Iowa';
+	    $checkValues['sex'] = 'male';
+
+	    $this->assertEquals($claims['iss'], $checkValues['iss']);
+	    $this->assertEquals($claims['sub'], $checkValues['sub']);
+	    $this->assertEquals($claims['aud'], $checkValues['aud']);
+	    $this->assertEquals($claims['exp'], $checkValues['exp']);
+	    $this->assertEquals($claims['nbf'], $checkValues['nbf']);
+	    $this->assertEquals($claims['iat'], $checkValues['iat']);
+	    $this->assertEquals($claims['jti'], $checkValues['jti']);
+	    $this->assertEquals($claims['age'], $checkValues['age']);
+	    $this->assertEquals($claims['location'], $checkValues['location']);
+	    $this->assertEquals($claims['sex'], $checkValues['sex']);
+    }
+
+    
 }
