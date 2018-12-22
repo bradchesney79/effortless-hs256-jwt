@@ -91,9 +91,15 @@ class Ehjwt
     /**
      * The config data.
      *
-     * @var array
+     * @var stdClass
      */
     protected $config = [];
+
+    /**
+     *
+     * @var object
+     */
+    public $error;
 
     public function __construct(string $secret = null, string $file = null) {
 
@@ -101,13 +107,13 @@ class Ehjwt
 
         if (getenv('ESJWT_DSN')) {
 
-            $this->config['dsn'] = getenv('ESJWT_DSN')
+            $this->config['dsn'] = getenv('ESJWT_DSN');
 
         }
 
         if (getenv('ESJWT_DB_USER')) {
 
-            $this->config['dbUser'] = getenv('ESJWT_DB_USER')
+            $this->config['dbUser'] = getenv('ESJWT_DB_USER');
 
         }
 
@@ -135,25 +141,32 @@ class Ehjwt
 
         }
 
-
         // load configuration from a config file
 
-        $this->file = $file;
+        if (is_null($file)) {
+            $this->file = __DIR__.'/../config/ehjwt-conf.php'
+        }
+        else {
+            $this->file = $file;
+        }
 
-        $this->config[] = require $this->file;
+        // Check for config file
+        if (file_exists($this->file) {
+            $this->config[] = require $this->file;
+        }
 
         // load the jwtSecret from the passed argument string
 
-        if (!is_null($secret)) {
-            $this->jwtSecret = $secret;
+        if (is_null($secret) && empty($this->jwtSecret)) {
+            $this->jwtSecret = $this->config['jwtSecret'];
         }
         else {
-            $this->jwtSecret = $this->config['jwtSecret'];
+            $this->jwtSecret = $secret;
         }
     }
 
-    public function Ehjwt(string $secret = null) {
-        $this->__construct($secret);
+    public function Ehjwt(string $secret = null, string $file = null) {
+        $this->__construct($secret, $file);
     }
 
 
