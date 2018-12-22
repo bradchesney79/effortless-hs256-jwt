@@ -96,10 +96,6 @@ class ehjwtTest extends TestCase
 		$now = time();
 		$expires = time() + 30 * 60;
 
-/*
-
-*/
-
 		$standardClaims = array(
 	        'iss'=>'rustbeltrebellion.com',
 	        'sub'=>'15448979450000000000',
@@ -154,5 +150,76 @@ class ehjwtTest extends TestCase
 	    $this->assertEquals($claims['sex'], $checkValues['sex']);
     }
 
-    
+    public function testEnvironmentVarsLoad() {
+
+    	if (getenv('ESJWT_DSN')) {
+
+            $this->config['dsn'] = getenv('ESJWT_DSN')
+
+        }
+
+        if (getenv('ESJWT_DB_USER')) {
+
+            $this->config['dbUser'] = getenv('ESJWT_DB_USER')
+
+        }
+
+        if (getenv('ESJWT_DB_PASS')) {
+
+            $this->config['dbPassword'] = getenv('ESJWT_DB_PASS');
+
+        }
+
+        if (getenv('ESJWT_JWT_SECRET')) {
+
+            $this->jwtSecret = getenv('ESJWT_JWT_SECRET');
+
+        }
+
+        if (getenv('ESJWT_ISS')) {
+
+            $this->iss = getenv('ESJWT_ISS');
+
+        }
+
+        if (getenv('ESJWT_AUD')) {
+
+            $this->aud = getenv('ESJWT_AUD');
+
+        }
+
+        $checkValues = [];
+
+	    $checkValues['iss'] = 'rustbeltrebellion.com';
+	    $checkValues['sub'] = '15448979450000000000';
+	    $checkValues['aud'] = 'rustbeltrebellion.com';
+	    $checkValues['exp'] = $expires;
+	    $checkValues['nbf'] = $now;
+	    $checkValues['iat'] = $now;
+	    $checkValues['jti'] = '1234567890';
+	    $checkValues['age'] = '39';
+	    $checkValues['location'] = 'Davenport, Iowa';
+	    $checkValues['sex'] = 'male';
+	    // ToDo: populate this variable
+	    $checkValues['config'] = '';
+	    ksort($checkValues['config']);
+
+	    $this->assertEquals($claims['iss'], $checkValues['iss']);
+	    $this->assertEquals($claims['sub'], $checkValues['sub']);
+	    $this->assertEquals($claims['aud'], $checkValues['aud']);
+	    $this->assertEquals($claims['exp'], $checkValues['exp']);
+	    $this->assertEquals($claims['nbf'], $checkValues['nbf']);
+	    $this->assertEquals($claims['iat'], $checkValues['iat']);
+	    $this->assertEquals($claims['jti'], $checkValues['jti']);
+	    $this->assertEquals($claims['age'], $checkValues['age']);
+	    $this->assertEquals($claims['location'], $checkValues['location']);
+	    $this->assertEquals($claims['sex'], $checkValues['sex']);
+    }
+
+    public function testConfigFileVarsLoad() {
+		$secret = 'secret';
+
+    	$jwt = new Ehjwt($secret);
+
+	}
 }
