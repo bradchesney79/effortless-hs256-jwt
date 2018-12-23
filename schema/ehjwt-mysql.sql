@@ -1,9 +1,7 @@
-
-
-
-CREATE TABLE `revoked_ehjwt` IF NOT EXISTS (
+CREATE TABLE IF NOT EXISTS `revoked_ehjwt` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `jti` int(10) unsigned DEFAULT NULL,
-  `sub` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `exp` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `jti` bigint unsigned NOT NULL,
+  `sub` int unsigned NOT NULL,
+  `exp` int unsigned NOT NULL,
   PRIMARY KEY (`id`);
+  ) ENGINE=InnoDB;
