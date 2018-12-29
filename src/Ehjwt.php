@@ -352,7 +352,24 @@ class Ehjwt
 
         // is the token revoked?
 
-        
+        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword', array(PDO::ATTR_PERSISTENT => true ));
+
+        $stmt = $dbh->prepare("SELECT * FROM revoked_ehjwt where sub = ?");
+        $stmt->bindParam(1, $this->sub);
+
+        // get records for this sub
+        if ($stmt->execute()) {
+            while ($row = $stmt->fetch()) {
+            //print_r($row);
+                
+            // any records where jti is 000...000
+
+            // any records where expires is larger than now
+
+            // any records where expires is smaller than now
+                // deleteRevocation record
+            }
+        }
 
 
         // the token checks out!
@@ -458,6 +475,56 @@ class Ehjwt
                 $this->customClaims[$claimKey] = $value;
             }
         }
+    }
+
+    private function writeRecordToRevocationTable(string $jti, string $sub, string $exp) {
+
+        try {
+            $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword', array(PDO::ATTR_PERSISTENT => true ));
+            
+            $stmt = $dbh->prepare("INSERT INTO revoked_ehjwt (jti, sub, exp) VALUES (?, ?, ?)");
+            
+            $stmt->bindParam(1, $jti);
+            $stmt->bindParam(2, $sub);
+            $stmt->bindParam(3, $exp);
+            $stmt->execute();
+
+            // $results = $dbh->query('SELECT * from revoked_ehjwt');
+
+            // foreach($results as $row) {
+            //     print_r($row);
+            // }
+            
+            $dbh = null;
+            $stmt = null;
+        }
+
+        catch (PDOException $e) {
+            //print "Error!: " . $e->getMessage() . "<br/>";
+            die();
+        }
+
+    }
+
+    private function deleteRecordFromRevocationTable(string $recordId) {
+
+        // try {
+        //     $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword', array(PDO::ATTR_PERSISTENT => true ));
+            
+        //     $results = $dbh->query('SELECT * from revoked_ehjwt');
+
+        //     foreach($results as $row) {
+        //         print_r($row);
+        //     }
+            
+        //     $dbh = null;
+        // }
+
+        // catch (PDOException $e) {
+        //     //print "Error!: " . $e->getMessage() . "<br/>";
+        //     die();
+        // }
+
     }
 
     public function deleteStandardClaims(string $standardClaimNamesCommaSeparated) {
