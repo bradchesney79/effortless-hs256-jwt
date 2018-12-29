@@ -359,10 +359,6 @@ class Ehjwt
         return true;
     }
 
-    public function revokeToken() {
-        //ToDo: add a record for the token jti claim
-    }
-
     public function loadToken(string $tokenString) {
         $this->token = $tokenString;
         $this->unpackToken();
@@ -429,6 +425,31 @@ class Ehjwt
                 }
             }
         }
+    }
+
+    public function addTokenRevocationRecord(string $jti, string $sub, string $revocationExpiration) {
+
+        // revoke a token with specific particulars
+
+    }
+
+    public function revokeToken(string $token) {
+
+        // unpack the token, add it to the revocation table
+
+    }
+
+    public function banUser(string $userSub, string $utcUnixEpochBanExpiration) {
+
+
+        // insert sub... the userId to ban, jti of 000...000, and end UTC Unix epoch of ban end
+
+    }
+
+    public function permabanUser(string $userSub) {
+
+        // insert sub... the userId to ban, jti of 000...000, and expires of 999...999
+
     }
 
     public function setCustomClaims(array $customClaims) {
