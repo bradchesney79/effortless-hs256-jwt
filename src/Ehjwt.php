@@ -101,7 +101,7 @@ class Ehjwt
      */
     public $error;
 
-    public function __construct(string $secret = null, string $file = null) {
+    public function __construct(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null) {
 
         // load configuration from environment variables
 
@@ -162,11 +162,24 @@ class Ehjwt
         }
         else {
             if (isset($this->jwtSecret)) {
-                //just use the env var secret
+                //just use the env var value
             }
             else {
+                //use the config file value
                 $this->jwtSecret = $this->config['jwtSecret'];
             }
+        }
+
+        if (isset($dsn)) {
+            $this->config['dsn'] = $dsn;
+        }
+
+        if (isset($dbUser)) {
+            $this->config['$dbUser'] = $dbUser;
+        }
+
+        if (isset($dbPassword)) {
+            $this->config['dbPassword'] = $dbPassword;
         }
 
     }
@@ -325,6 +338,11 @@ class Ehjwt
             // 'signature invalid, potential tampering
             return false;
         }
+
+        // is the token revoked?
+
+        
+
 
         // the token checks out!
         return true;
