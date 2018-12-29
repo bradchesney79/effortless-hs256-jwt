@@ -105,59 +105,70 @@ class Ehjwt
 
         // load configuration from environment variables
 
-        if (getenv('ESJWT_DSN')) {
+        $dsnEnv = getenv('ESJWT_DSN');
+        $dbUserEnv = getenv('ESJWT_DB_USER');
+        $dbPasswordEnv = getenv('ESJWT_DB_PASS');
+        $jwtSecretEnv = getenv('ESJWT_JWT_SECRET');
+        $issEnv = getenv('ESJWT_ISS');
+        $audEnv = getenv('ESJWT_AUD');
+        $useEnvVars = getenv('ESJWT_USE_ENV_VARS');
 
-            $this->config['dsn'] = getenv('ESJWT_DSN');
+        if ($dsnEnv) {
 
-        }
-
-        if (getenv('ESJWT_DB_USER')) {
-
-            $this->config['dbUser'] = getenv('ESJWT_DB_USER');
-
-        }
-
-        if (getenv('ESJWT_DB_PASS')) {
-
-            $this->config['dbPassword'] = getenv('ESJWT_DB_PASS');
+            $this->config['dsn'] = $dsnEnv;
 
         }
 
-        if (getenv('ESJWT_JWT_SECRET')) {
+        if ($dbUserEnv) {
 
-            $this->jwtSecret = getenv('ESJWT_JWT_SECRET');
-
-        }
-
-        if (getenv('ESJWT_ISS')) {
-
-            $this->iss = getenv('ESJWT_ISS');
+            $this->config['dbUser'] = $dbUserEnv;
 
         }
 
-        if (getenv('ESJWT_AUD')) {
+        if ($dbPasswordEnv) {
 
-            $this->aud = getenv('ESJWT_AUD');
+            $this->config['dbPassword'] = $dbPasswordEnv;
+
+        }
+
+        if ($jwtSecretEnv) {
+
+            $this->jwtSecret = $jwtSecretEnv;
+
+        }
+
+        if ($issEnv) {
+
+            $this->iss = $issEnv;
+
+        }
+
+        if ($audEnv) {
+
+            $this->aud = $audEnv;
 
         }
 
         // load configuration from a config file
 
-        if (is_null($file)) {
-            $this->file = __DIR__.'/../config/ehjwt-conf.php';
-        }
-        else {
-            $this->file = $file;
-        }
+        if ($useEnvVars == false) {
+            if (is_null($file)) {
+                $this->file = __DIR__.'/../config/ehjwt-conf.php';
+            }
+            else {
+                $this->file = $file;
+            }
 
-        // check for config file existing before actual load
-        if (file_exists($this->file)) {
-            $this->config[] = require $this->file;
+
+            // check for config file existing before actual load
+            if (file_exists($this->file)) {
+                $this->config[] = require $this->file;
+            }
         }
 
         // load the jwtSecret from the passed argument string
 
-        if (isset($secret)) {
+        if (isset($secret) && $useEnvVars == false) {
             $this->jwtSecret = $secret;
         }
         else {
@@ -170,15 +181,15 @@ class Ehjwt
             }
         }
 
-        if (isset($dsn)) {
+        if (isset($dsn) && $useEnvVars == false) {
             $this->config['dsn'] = $dsn;
         }
 
-        if (isset($dbUser)) {
+        if (isset($dbUser) && $useEnvVars == false) {
             $this->config['$dbUser'] = $dbUser;
         }
 
-        if (isset($dbPassword)) {
+        if (isset($dbPassword) && $useEnvVars == false) {
             $this->config['dbPassword'] = $dbPassword;
         }
 
