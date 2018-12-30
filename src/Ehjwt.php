@@ -23,6 +23,9 @@ class Ehjwt
     jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation 
     */
 
+    18446744073709551615
+    00000000000000000000
+
     /**
      * Issuer
      *
@@ -352,7 +355,7 @@ class Ehjwt
 
         // is the token revoked?
 
-        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword', array(PDO::ATTR_PERSISTENT => true ));
+        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
 
         $stmt = $dbh->prepare("SELECT * FROM revoked_ehjwt where sub = ?");
         $stmt->bindParam(1, $this->sub);
@@ -361,7 +364,7 @@ class Ehjwt
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()) {
             //print_r($row);
-                
+
             // any records where jti is 000...000
 
             // any records where expires is larger than now
@@ -448,24 +451,38 @@ class Ehjwt
 
         // revoke a token with specific particulars
 
+        writeRecordToRevocationTable($jti, $sub, $revocationExpiration);
+
     }
 
     public function revokeToken(string $token) {
 
         // unpack the token, add it to the revocation table
 
+        $this->loadToken($token);
+
+        // only add if the token is valid-- don't let imposters kill otherwise valid tokens
+        if ($this->validateToken($this->token)) {
+
+            writeRecordToRevocationTable($this->jti, $this->sub, $revocationExpiration);
+
+        }
+
     }
 
     public function banUser(string $userSub, string $utcUnixEpochBanExpiration) {
 
+        $banExp = $this->exp + 60;
 
-        // insert sub... the userId to ban, jti of 000...000, and end UTC Unix epoch of ban end
+        // insert jti of 0, sub... the userId to ban, and UTC Unix epoch of ban end
+        writeRecordToRevocationTable('0', $userSub, $utcUnixEpochBanExpiration);
 
     }
 
     public function permabanUser(string $userSub) {
 
-        // insert sub... the userId to ban, jti of 000...000, and expires of 999...999
+        // insert jti of 0, sub... the userId to ban, and UTC Unix epoch of ban end-- Tuesday after never
+        writeRecordToRevocationTable('0', $userSub, '18446744073709551615');
 
     }
 
@@ -480,7 +497,7 @@ class Ehjwt
     private function writeRecordToRevocationTable(string $jti, string $sub, string $exp) {
 
         try {
-            $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword', array(PDO::ATTR_PERSISTENT => true ));
+            $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
             
             $stmt = $dbh->prepare("INSERT INTO revoked_ehjwt (jti, sub, exp) VALUES (?, ?, ?)");
             
@@ -508,22 +525,20 @@ class Ehjwt
 
     private function deleteRecordFromRevocationTable(string $recordId) {
 
-        // try {
-        //     $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword', array(PDO::ATTR_PERSISTENT => true ));
+        try {
+            $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
             
-        //     $results = $dbh->query('SELECT * from revoked_ehjwt');
-
-        //     foreach($results as $row) {
-        //         print_r($row);
-        //     }
+            $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE id = ?");
             
-        //     $dbh = null;
-        // }
+            $stmt->bindParam(1, $recordId);
 
-        // catch (PDOException $e) {
-        //     //print "Error!: " . $e->getMessage() . "<br/>";
-        //     die();
-        // }
+            $stmt->execute();
+        }
+
+        catch (PDOException $e) {
+            //print "Error!: " . $e->getMessage() . "<br/>";
+            die();
+        }
 
     }
 
