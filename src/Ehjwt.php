@@ -23,9 +23,6 @@ class Ehjwt
     jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation 
     */
 
-    18446744073709551615
-    00000000000000000000
-
     /**
      * Issuer
      *
