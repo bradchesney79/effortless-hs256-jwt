@@ -293,6 +293,7 @@ class Ehjwt
 
         try {
             $unpackedTokenBody = json_decode($this->base64UrlDecode($tokenParts[1]), true);
+            var_dump($unpackedTokenBody);
         }
         catch (exception $e) {
             // 'Body does not decode'
@@ -310,7 +311,7 @@ class Ehjwt
 
         $utcTimeNow = $date->format("U");
 
-        $expiryTime = $loadedTokenUnpackedBody['exp'];
+        $expiryTime = $unpackedTokenBody['exp'];
 
         // a good JWT integration uses token expiration, I am forcing your hand
         if (($utcTimeNow - $this->exp) > 0 ) {
@@ -352,19 +353,28 @@ class Ehjwt
 
         // is the token revoked?
 
-        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+        $dbh = new PDO($unpackedTokenBody['config']['dsn'], $unpackedTokenBody['config']['dbUser'], $unpackedTokenBody['config']['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
 
         $stmt = $dbh->prepare("SELECT * FROM revoked_ehjwt where sub = ?");
-        $stmt->bindParam(1, $this->sub);
+        $stmt->bindParam(1, $unpackedTokenBody['sub']);
 
         // get records for this sub
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()) {
             //print_r($row);
 
-            // any records where jti is 000...000
+            // any records where jti is 0
+                if($row['jti'] == 0 && $row['exp'] < $utcTimeNow) {
+                    // user is under an unexpired ban condition
+                    return false;
+                }
 
-            // any records where expires is larger than now
+                if($row['jti'] == $unpackedTokenBody['jti']) {
+                    // token is revoked
+                    return false;
+                }
+
+
 
             // any records where expires is smaller than now
                 // deleteRevocation record
