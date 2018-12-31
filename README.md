@@ -25,22 +25,35 @@ So, this is a low level library designed to:
 ### Supply the necessary particulars; a PDO DB DSN, a PDO DB user, a PDO DB password, and a "system secret"
 - Make env vars available to PHP
 - Copy and edit the example config file to the config directory which shares the same parent directory as the composer vendor directory
-- Create the object as such, '$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);' where all the variables are set as the configs to use
+-- I use composer. But if I didn't, the parent directory of my webroot directory is where I would put it
+--- Alternatively, you may skip using env vars or a config file and create the object as such, '$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);' where all the parameters are set as the configs to use
 
 ### Run the db install script
+
+## Step 1a
+
+Installation via composer is not required-- I just think it is the best way
+
+```bash
+composer install bradchesney79/effortless-hs256-jwt
+```
+
+Then be sure to do the completely normal require of vendor/autoload.php
 
 ## Step 2 Usage:
 
 
 ### Make the code available:
 
-```php
-use bradchesney79/ehjwt;
-```
 
 ```php
 require_once 'path/bradchesney79/ehjwt/Ehjwt.php';
 ```
+
+```php
+use bradchesney79/ehjwt;
+```
+
 
 
 ### Create a token:
@@ -77,13 +90,15 @@ Run the tests with the PHPUnit installed in the dev dependencies
 
 ToDo:
 
+- Update tests to include all the config possibilities
+
 - Finish the code that revokes tokens
+
+- Write tests for token revocation
 
 - Write the token creation code
 
 - Finish the validation code
-
-- Add the iss and aud from the config or env vars to the constructor logic
 
 - Use https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df as the basis for instructions on how to use this library
 
@@ -92,4 +107,6 @@ Caveats:
 
 - I have made decisions that force you to use this library in the closest to best practices using a specific secret key as I could manage. Other libraries allow you more freedom-- potentially to shoot yourself in the foot.
 
-- There is no storage of who or what tokens are out there. You cannot see if one exists. You can only validate and leverage ones that come back to you.
+- There is no storage of who or what tokens are out there. You cannot see if one exists. You can only validate and leverage tokens that come back to you.
+
+- Banning isn't part of the JWT standard-- but, it seemed like a simple to create and convenient mechanism to expose-- and no one has to use that functionality.
