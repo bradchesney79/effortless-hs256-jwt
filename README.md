@@ -33,7 +33,8 @@ So, this is a low level library designed to:
 *Alternatively, you may skip using env vars or a config file and create the object with parameters as the configs to use as such:*
 *'$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);'*
 
-### Run the db install script
+**Run the db install script that can be found in the schema directory**
+_**I usually do this via a provisioning script that fires off the SQL script after installing MySQL, PHP, composer, and the dependencies installed via composer.**_
 
 ## Step 1a
 
