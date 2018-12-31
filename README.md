@@ -19,10 +19,11 @@ So, this is a low level library designed to:
 
 ## Step 1 Install:
 
-### Add via composer or git clone or good old cut/paste and require_once()
+**Add via composer or git clone or good old cut/paste and require_once()**
 
 
-### Supply the necessary particulars; a PDO DB DSN, a PDO DB user, a PDO DB password, and a "system secret"
+**Supply the necessary particulars; a PDO DB DSN, a PDO DB user, a PDO DB password, and a "system secret"**
+
 - Make env vars available to PHP
 - Copy and edit the example config file to the config directory which shares the same parent directory as the composer vendor directory
 
