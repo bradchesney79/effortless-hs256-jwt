@@ -53,13 +53,14 @@ Then be sure to do the completely normal require of vendor/autoload.php
 
 
 ```php
-require_once 'path/bradchesney79/ehjwt/Ehjwt.php';
-```
-
-```php
 use bradchesney79/ehjwt;
 ```
 
+*Unwashed heathens that resist using composer will need something like this:*
+
+```php
+require_once 'path/bradchesney79/ehjwt/Ehjwt.php';
+```
 
 
 ### Create a token:
