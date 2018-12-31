@@ -1,6 +1,9 @@
 So, this is a low level library designed to:
 
+- Allow you to specify the config parameters via passing them as arguments in the Ehjwt object instantiation
 - Allow you to specify a path and config file or use a config file in a default location with a default name of config/ehjwt-conf.php
+- Allow you to specify the config parameters with environment variables
+- Allow you to specify an environment variable that prevents overriding the environment variables
 - Allow you to set environment variables to specify the encryption key and a database or other PDO compatible persistent data store particulars
 - Allow you to be confident about settings, my library uses your environment variables, config file, or arguments passed to the instantiation constructor in that order for all configurable values
 - Allow you to rest easy that the algorithm will always be HS256
@@ -19,11 +22,12 @@ So, this is a low level library designed to:
 ### Add via composer or git clone or good old cut/paste and require_once()
 
 
-### Edit the config file
-
+### Supply the necessary particulars; a PDO DB DSN, a PDO DB user, a PDO DB password, and a "system secret"
+- Make env vars available to PHP
+- Copy and edit the example config file to the config directory which shares the same parent directory as the composer vendor directory
+- Create the object as such, '$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);' where all the variables are set as the configs to use
 
 ### Run the db install script
-
 
 ## Step 2 Usage:
 
