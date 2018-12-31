@@ -374,10 +374,12 @@ class Ehjwt
                     return false;
                 }
 
+                // remove records for expired tokens to keep the table small and snappy
+                if($row['exp'] > $utcTimeNow) {
+                    // deleteRevocation record
+                    $this->deleteRecordFromRevocationTable($unpackedTokenBody['id'])
+                }
 
-
-            // any records where expires is smaller than now
-                // deleteRevocation record
             }
         }
 
