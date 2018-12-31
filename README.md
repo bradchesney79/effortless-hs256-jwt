@@ -39,10 +39,12 @@ So, this is a low level library designed to:
 Installation via composer is not required-- I just think it is the best way
 
 ```bash
-composer install bradchesney79/effortless-hs256-jwt
+composer require bradchesney79/effortless-hs256-jwt
 ```
 
 Then be sure to do the completely normal require of vendor/autoload.php
+
+*If you have a composer.lock file, substitute composer update in place of composer require...*
 
 ## Step 2 Usage:
 
