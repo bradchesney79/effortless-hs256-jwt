@@ -59,7 +59,7 @@ use bradchesney79/ehjwt;
 *Unwashed heathens that resist using composer will need something like this:*
 
 ```php
-require_once 'path/bradchesney79/ehjwt/Ehjwt.php';
+require_once 'path/bradchesney79/effortless-hs256-jwt/src/Ehjwt.php';
 ```
 
 
