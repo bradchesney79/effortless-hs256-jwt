@@ -17,7 +17,7 @@ So, this is a low level library designed to:
 - Allow you to revoke a token
 - Allow you to temporarily or permanently revoke all tokens associated with an identified user
 
-## Step 1 Install:
+## Step 1 - Install:
 
 **Add via composer or git clone or good old cut/paste and require_once()**
 
@@ -45,7 +45,7 @@ composer require bradchesney79/effortless-hs256-jwt
 
 *If you have a composer.lock file, substitute composer update in place of composer require...*
 
-## Step 2 Usage:
+## Step 2 - Usage:
 
 
 ### Make the code available:
@@ -88,7 +88,7 @@ require_once 'path/bradchesney79/effortless-hs256-jwt/src/Ehjwt.php';
 ### Remove token claims:
 
 
-## Step A Test:
+## Step A - Test:
 
 Run the tests with the PHPUnit installed in the dev dependencies
 
