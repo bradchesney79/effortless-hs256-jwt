@@ -42,8 +42,6 @@ Installation via composer is not required-- I just think it is the best way
 composer require bradchesney79/effortless-hs256-jwt
 ```
 
-Then be sure to do the completely normal require of vendor/autoload.php
-
 *If you have a composer.lock file, substitute composer update in place of composer require...*
 
 ## Step 2 Usage:
@@ -51,6 +49,8 @@ Then be sure to do the completely normal require of vendor/autoload.php
 
 ### Make the code available:
 
+
+Be sure to do the completely normal PHP require or require_once of vendor/autoload.php
 
 ```php
 use bradchesney79/ehjwt;
