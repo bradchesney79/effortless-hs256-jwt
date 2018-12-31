@@ -25,8 +25,8 @@ So, this is a low level library designed to:
 ### Supply the necessary particulars; a PDO DB DSN, a PDO DB user, a PDO DB password, and a "system secret"
 - Make env vars available to PHP
 - Copy and edit the example config file to the config directory which shares the same parent directory as the composer vendor directory
--- I use composer. But if I didn't, the parent directory of my webroot directory is where I would put it
---- Alternatively, you may skip using env vars or a config file and create the object as such, '$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);' where all the parameters are set as the configs to use
+- --I use composer. But if I didn't, the parent directory of my webroot directory is where I would put it
+- -- -- Alternatively, you may skip using env vars or a config file and create the object as such, '$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);' where all the parameters are set as the configs to use
 
 ### Run the db install script
 
