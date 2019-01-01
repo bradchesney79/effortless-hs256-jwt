@@ -100,15 +100,13 @@ Run the tests with the PHPUnit installed in the dev dependencies
 
 ToDo:
 
-- Update tests to include all the config possibilities
-
 - Finish the code that revokes tokens
 
 - Write tests for token revocation
 
-- Write the token creation code
-
 - Finish the validation code
+
+- Write tests for token validation
 
 - Use https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df as the basis for instructions on how to use this library
 
