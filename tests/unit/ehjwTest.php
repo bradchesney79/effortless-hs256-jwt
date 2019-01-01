@@ -88,6 +88,76 @@ class ehjwtTest extends TestCase
 		$this->assertEquals($expectedAlgorithmChunk, $actualAlgorithmChunk);
     }
 
+    public function testCreateTokenWithConstructorParameters() {
+    	$secret = 'secret';
+
+		$jwt = new Ehjwt($secret, null, 'mysql:host=localhost;dbname=ehjwt', 'root', 'password', 'rustbeltrebellion.com', 'rustbeltrebellion.com');
+
+		$now = time();
+		$expires = time() + 30 * 60;
+
+/*
+        iss: issuer, the website that issued the token
+        sub: subject, the id of the entity being granted the token 
+            (int has an unsigned, numeric limit of 4294967295)
+            (bigint has an unsigned, numeric limit of 18446744073709551615)
+        	(unix epoch as of "now" 1544897945)
+		aud: audience, the users of the token-- generally a url or string
+        exp: expires, the UTC UNIX epoch time stamp of when the token is no longer valid
+        nbf: not before, the UTC UNIX epoch time stamp of when the token becomes valid
+        iat: issued at, the UTC UNIX epoch time stamp of when the token was issued
+        jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation 
+*/
+
+		$standardClaims = array(
+	        'sub'=>'15448979450000000000',
+	        'exp'=>'1546353624',
+	        'nbf'=>'1546352624',
+	        'iat'=>'1546352624',
+	        'jti'=>'1234567890'
+		);
+		$jwt->setStandardClaims($standardClaims);
+
+		$customClaims = array(
+			'age' => '39',
+			'sex' => 'male',
+			'location' => 'Davenport, Iowa'
+		);
+
+		$jwt->setCustomClaims($customClaims);
+
+		// $jwt->deleteStandardClaims('aud');
+
+		// $jwt->deleteCustomClaims('location');
+
+		$jwt->createToken();
+
+		$expectedAlgorithmChunk = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+		$expectedPayloadChunk = 'eyJhZ2UiOiIzOSIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9';
+		$expectedCheckSumChunk = 'g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
+
+		$jwtChunks = explode('.',$jwt->getToken());
+
+		$jwtChunksCount = count($jwtChunks);
+
+		$actualAlgorithmChunk = $jwtChunks[0];
+		$actualPayloadChunk = $jwtChunks[1];
+		$actualChecksumChunk = $jwtChunks[2];
+
+		// Check that there are three parts to the JWT
+		$this->assertEquals(3, $jwtChunksCount);
+
+		// Check that the algorithm chunk is predictably HS256
+		$this->assertEquals($expectedAlgorithmChunk, $actualAlgorithmChunk);
+		$this->assertEquals($expectedPayloadChunk, $actualPayloadChunk);
+		$this->assertEquals($expectedCheckSumChunk, $actualChecksumChunk);
+		// var_dump($now);
+		// var_dump('');
+		// var_dump($jwtChunks[1]);
+		// var_dump('');
+		// var_dump($jwtChunks[2]);
+    }
+
     public function testLoadToken() {
     	    	$secret = 'secret';
 
