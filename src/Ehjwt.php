@@ -101,7 +101,7 @@ class Ehjwt
      */
     public $error;
 
-    public function __construct(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null) {
+    public function __construct(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null, string $sub = null, string $aud = null) {
 
         // load configuration from environment variables
 
@@ -193,10 +193,18 @@ class Ehjwt
             $this->config['dbPassword'] = $dbPassword;
         }
 
+        if (isset($iss) && $useEnvVars == false) {
+            $this->iss = $iss;
+        }
+
+        if (isset($aud) && $useEnvVars == false) {
+            $this->aud = $aud;
+        }
+
     }
 
-    public function Ehjwt(string $secret = null, string $file = null) {
-        $this->__construct($secret, $file);
+    public function Ehjwt(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null, string $sub = null, string $aud = null) {
+        $this->__construct($secret, $file, $dsn, $dbUser, $dbPassword, $sub, $aud);
     }
 
 
@@ -377,7 +385,7 @@ class Ehjwt
                 // remove records for expired tokens to keep the table small and snappy
                 if($row['exp'] > $utcTimeNow) {
                     // deleteRevocation record
-                    $this->deleteRecordFromRevocationTable($unpackedTokenBody['id'])
+                    $this->deleteRecordFromRevocationTable($unpackedTokenBody['id']);
                 }
 
             }
