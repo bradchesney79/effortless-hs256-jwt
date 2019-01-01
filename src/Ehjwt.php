@@ -425,12 +425,20 @@ class Ehjwt
         return $allClaims;
     }
 
+    // private function base64UrlEncode(string $unencodedString) {
+    //     return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($unencodedString));
+    // }
+
     private function base64UrlEncode(string $unencodedString) {
-        return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($unencodedString));
+      return rtrim(strtr(base64_encode($unencodedString), '+/', '-_'), '=');
     }
 
+    // private function base64UrlDecode(string $base64UrlEncodedString) {
+    //     return base64_decode(strtr($base64UrlEncodedString, '-_', '+/'));
+    // }
+
     private function base64UrlDecode(string $base64UrlEncodedString) {
-        return base64_decode(strtr($base64UrlEncodedString, '-_', '+/'));
+        return base64_decode(str_pad(strtr($base64UrlEncodedString, '-_', '+/'), strlen($base64UrlEncodedString) % 4, '=', STR_PAD_RIGHT)); 
     }
 
     private function makeHmacHash(string $base64UrlHeader, string $base64UrlClaims) {
