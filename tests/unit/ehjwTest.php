@@ -151,11 +151,6 @@ class ehjwtTest extends TestCase
 		$this->assertEquals($expectedAlgorithmChunk, $actualAlgorithmChunk);
 		$this->assertEquals($expectedPayloadChunk, $actualPayloadChunk);
 		$this->assertEquals($expectedCheckSumChunk, $actualChecksumChunk);
-		// var_dump($now);
-		// var_dump('');
-		// var_dump($jwtChunks[1]);
-		// var_dump('');
-		// var_dump($jwtChunks[2]);
     }
 
     public function testLoadToken() {
