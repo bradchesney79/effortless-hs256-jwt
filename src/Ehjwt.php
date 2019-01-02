@@ -103,6 +103,8 @@ class Ehjwt
 
     public function __construct(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null, string $sub = null, string $aud = null) {
 
+        var_dump('==========================================================');
+
         // load configuration from environment variables
 
         $dsnEnv = getenv('ESJWT_DSN');
@@ -168,7 +170,7 @@ class Ehjwt
 
         // load the jwtSecret from the passed argument string
 
-        if (isset($secret) && $useEnvVars == false) {
+        if (isset($secret) && $secret !== null && $useEnvVars == false) {
             $this->jwtSecret = $secret;
         }
         else {
@@ -177,7 +179,7 @@ class Ehjwt
             }
             else {
                 //use the config file value
-                $this->jwtSecret = $this->config['jwtSecret'];
+                $this->jwtSecret = $this->jwtSecret;
             }
         }
 
@@ -281,48 +283,123 @@ class Ehjwt
         $this->createToken();
         return $this->token;
     }
-
-    public static function validateToken(string $tokenString) {
+    public function validateToken(string $tokenString) {
 
         $tokenParts = explode('.', $tokenString);
 
         if (3 !== count($tokenParts)) {
+            var_dump('segments');
             // 'Incorrect quantity of segments'
             return false;
         }
 
-        try {
-            $unpackedTokenHeader = json_decode($this->base64UrlDecode($tokenParts[0]), true);
-        }
-        catch (exception $e) {
+
+        var_dump('header');
+        $unpackedTokenHeader = json_decode($this->base64UrlDecode($tokenParts[0]), true);
+
+
+        switch (json_last_error()) {
+            case JSON_ERROR_NONE:
+                $error = ''; // JSON is valid // No error has occurred
+                break;
+            case JSON_ERROR_DEPTH:
+                $error = 'The maximum stack depth has been exceeded.';
+                break;
+            case JSON_ERROR_STATE_MISMATCH:
+                $error = 'Invalid or malformed JSON.';
+                break;
+            case JSON_ERROR_CTRL_CHAR:
+                $error = 'Control character error, possibly incorrectly encoded.';
+                break;
+            case JSON_ERROR_SYNTAX:
+                $error = 'Syntax error, malformed JSON.';
+                break;
+            // PHP >= 5.3.3
+            case JSON_ERROR_UTF8:
+                $error = 'Malformed UTF-8 characters, possibly incorrectly encoded.';
+                break;
+            // PHP >= 5.5.0
+            case JSON_ERROR_RECURSION:
+                $error = 'One or more recursive references in the value to be encoded.';
+                break;
+            // PHP >= 5.5.0
+            case JSON_ERROR_INF_OR_NAN:
+                $error = 'One or more NAN or INF values in the value to be encoded.';
+                break;
+            case JSON_ERROR_UNSUPPORTED_TYPE:
+                $error = 'A value of a type that cannot be encoded was given.';
+                break;
+            default:
+                $error = 'Unknown JSON error occured.';
+                break;
+    }
+
+        if ($error !== '') {
+            var_dump('undecodable header');
             // 'Header does not decode'
             return false;
         }
 
-        try {
-            $unpackedTokenBody = json_decode($this->base64UrlDecode($tokenParts[1]), true);
-            var_dump($unpackedTokenBody);
-        }
-        catch (exception $e) {
-            // 'Body does not decode'
+        var_dump('payload');
+        $unpackedTokenPayload = json_decode($this->base64UrlDecode($tokenParts[1]), true);
+
+        switch (json_last_error()) {
+            case JSON_ERROR_NONE:
+                // JSON is valid, no error has occurred
+                $error = '';
+                break;
+            case JSON_ERROR_DEPTH:
+                $error = 'The maximum stack depth has been exceeded.';
+                break;
+            case JSON_ERROR_STATE_MISMATCH:
+                $error = 'Invalid or malformed JSON.';
+                break;
+            case JSON_ERROR_CTRL_CHAR:
+                $error = 'Control character error, possibly incorrectly encoded.';
+                break;
+            case JSON_ERROR_SYNTAX:
+                $error = 'Syntax error, malformed JSON.';
+                break;
+            case JSON_ERROR_UTF8:
+                $error = 'Malformed UTF-8 characters, possibly incorrectly encoded.';
+                break;
+            case JSON_ERROR_RECURSION:
+                $error = 'One or more recursive references in the value to be encoded.';
+                break;
+            case JSON_ERROR_INF_OR_NAN:
+                $error = 'One or more NAN or INF values in the value to be encoded.';
+                break;
+            case JSON_ERROR_UNSUPPORTED_TYPE:
+                $error = 'A value of a type that cannot be encoded was given.';
+                break;
+            default:
+                $error = 'Unknown JSON error occured.';
+                break;
+    }
+
+        if ($error !== '') {
+            var_dump('undecodable payload');
+            // 'Payload does not decode'
             return false;
         }
 
         $unpackedTokenSignature = $tokenParts[2];
 
         if ($unpackedTokenHeader['alg'] !== 'HS256') {
+            var_dump('algorithm');
             // 'Wrong algorithm'
             return false;
         }
 
-        $date = new \DateTime('now', 'UTC');
+        $date = new \DateTime('now');
 
-        $utcTimeNow = $date->format("U");
+        $utcTimeNow = $date->getTimestamp();
 
-        $expiryTime = $unpackedTokenBody['exp'];
+        $expiryTime = $unpackedTokenPayload['exp'];
 
         // a good JWT integration uses token expiration, I am forcing your hand
         if (($utcTimeNow - $this->exp) > 0 ) {
+            var_dump('expired');
             // 'Expired (exp)'
             return false;
         }
@@ -330,6 +407,7 @@ class Ehjwt
         // if nbf is set
         if (null !== $this->nbf) {
             if ($this->nbf < $utcTimeNow) {
+                var_dump('too early');
                 // 'Too early for not before(nbf) value'
                 return false;
             }

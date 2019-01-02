@@ -9,6 +9,7 @@ class ehjwtTest extends TestCase
 {
 
 	public function testAssertTrueIsTrue() {
+		// var_dump('testAssertTrueIsTrue()');
 		// Even if the rest of the world is exploding,
 		// this test should pass.
 		// You should at least have one passing test.
@@ -16,6 +17,7 @@ class ehjwtTest extends TestCase
     }
 
     public function testSecretLoads() {
+		// var_dump('testSecretLoads()');
     	$secret = 'secret';
 
 		$reflectionClass = new ReflectionClass('bradchesney79\Ehjwt');
@@ -28,6 +30,7 @@ class ehjwtTest extends TestCase
 
 
     public function testCreateToken() {
+		// var_dump('testCreateToken()');
     	$secret = 'secret';
 
 		$jwt = new Ehjwt($secret);
@@ -88,7 +91,120 @@ class ehjwtTest extends TestCase
 		$this->assertEquals($expectedAlgorithmChunk, $actualAlgorithmChunk);
     }
 
-    public function testCreateTokenWithConstructorParameters() {
+   
+
+    public function testLoadToken() {
+		// var_dump('testLoadToken()');
+    	    	$secret = 'secret';
+
+		$jwt = new Ehjwt($secret);
+
+		$now = time();
+		$expires = time() + 30 * 60;
+
+		$standardClaims = array(
+	        'iss'=>'rustbeltrebellion.com',
+	        'sub'=>'15448979450000000000',
+	        'aud'=>'rustbeltrebellion.com',
+	        'exp'=>"$expires",
+	        'nbf'=>"$now",
+	        'iat'=>"$now",
+	        'jti'=>'1234567890'
+		);
+		$jwt->setStandardClaims($standardClaims);
+
+		$customClaims = array(
+			'age' => '39',
+			'sex' => 'male',
+			'location' => 'Davenport, Iowa'
+		);
+
+		$jwt->setCustomClaims($customClaims);
+
+		$jwt->createToken();
+
+		$token = $jwt->getToken();
+
+		$newJwt = new Ehjwt('secret');
+
+		$newJwt->loadToken($token);
+
+		$claims = $newJwt->getClaims();
+
+		$checkValues = [];
+
+	    $checkValues['iss'] = 'rustbeltrebellion.com';
+	    $checkValues['sub'] = '15448979450000000000';
+	    $checkValues['aud'] = 'rustbeltrebellion.com';
+	    $checkValues['exp'] = $expires;
+	    $checkValues['nbf'] = $now;
+	    $checkValues['iat'] = $now;
+	    $checkValues['jti'] = '1234567890';
+	    $checkValues['age'] = '39';
+	    $checkValues['location'] = 'Davenport, Iowa';
+	    $checkValues['sex'] = 'male';
+
+	    $this->assertEquals($claims['iss'], $checkValues['iss']);
+	    $this->assertEquals($claims['sub'], $checkValues['sub']);
+	    $this->assertEquals($claims['aud'], $checkValues['aud']);
+	    $this->assertEquals($claims['exp'], $checkValues['exp']);
+	    $this->assertEquals($claims['nbf'], $checkValues['nbf']);
+	    $this->assertEquals($claims['iat'], $checkValues['iat']);
+	    $this->assertEquals($claims['jti'], $checkValues['jti']);
+	    $this->assertEquals($claims['age'], $checkValues['age']);
+	    $this->assertEquals($claims['location'], $checkValues['location']);
+	    $this->assertEquals($claims['sex'], $checkValues['sex']);
+    }
+
+    
+
+    
+
+  //   public function testChunksInvalidToken() {
+		// var_dump('testChunksInvalidToken()');
+  //   	$secret = 'secret';
+
+		// $jwt = new Ehjwt($secret);
+
+		// $now = time();
+		// $expires = time() + 30 * 60;
+
+		// $standardClaims = array(
+	 //        'iss'=>'rustbeltrebellion.com',
+	 //        'sub'=>'15448979450000000000',
+	 //        'aud'=>'rustbeltrebellion.com',
+	 //        'exp'=>"$expires",
+	 //        'nbf'=>"$now",
+	 //        'iat'=>"$now",
+	 //        'jti'=>'1234567890'
+		// );
+		// $jwt->setStandardClaims($standardClaims);
+
+		// $customClaims = array(
+		// 	'age' => '39',
+		// 	'sex' => 'male',
+		// 	'location' => 'Davenport, Iowa'
+		// );
+
+		// $jwt->setCustomClaims($customClaims);
+
+		// $jwt->createToken();
+
+		// $token = $jwt->getToken();
+
+		// $cutOffPoint = strpos($token, '.');
+
+		// $brokenToken = substr( $token, $cutOffPoint + 1);
+
+		// $validationResult = Ehjwt::validateToken($brokenToken);
+
+		// var_dump($this);
+
+		// $this->assertEquals($validationResult, false);
+  //   }
+
+     public function testCreateTokenWithConstructorParameters() {
+		// var_dump('testCreateTokenWithConstructorParameters()');
     	$secret = 'secret';
 
 		$jwt = new Ehjwt($secret, null, 'mysql:host=localhost;dbname=ehjwt', 'root', 'password', 'rustbeltrebellion.com', 'rustbeltrebellion.com');
@@ -153,69 +269,51 @@ class ehjwtTest extends TestCase
 		$this->assertEquals($expectedCheckSumChunk, $actualChecksumChunk);
     }
 
-    public function testLoadToken() {
-    	    	$secret = 'secret';
+    public function testAlgorithmHeaderInvalidToken() {
+		// var_dump('testAlgorithmHeaderInvalidToken()');
 
-		$jwt = new Ehjwt($secret);
+		$jwt = new Ehjwt();
 
-		$now = time();
-		$expires = time() + 30 * 60;
+		$brokenToken = 'zI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
 
-		$standardClaims = array(
-	        'iss'=>'rustbeltrebellion.com',
-	        'sub'=>'15448979450000000000',
-	        'aud'=>'rustbeltrebellion.com',
-	        'exp'=>"$expires",
-	        'nbf'=>"$now",
-	        'iat'=>"$now",
-	        'jti'=>'1234567890'
-		);
-		$jwt->setStandardClaims($standardClaims);
+		$validationResult = $jwt->validateToken($brokenToken);
 
-		$customClaims = array(
-			'age' => '39',
-			'sex' => 'male',
-			'location' => 'Davenport, Iowa'
-		);
+		var_dump($validationResult);
 
-		$jwt->setCustomClaims($customClaims);
+		$this->assertEquals($validationResult, false);
 
-		$jwt->createToken();
+	}
 
-		$token = $jwt->getToken();
+    public function testPayloadInvalidToken() {
+		// var_dump('testPayloadToken()');
 
-		$newJwt = new Ehjwt('secret');
+		$jwt = new Ehjwt();
 
-		$newJwt->loadToken($token);
+		$brokenToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
 
-		$claims = $newJwt->getClaims();
+		$validationResult = $jwt->validateToken($brokenToken);
 
-		$checkValues = [];
+		var_dump($validationResult);
 
-	    $checkValues['iss'] = 'rustbeltrebellion.com';
-	    $checkValues['sub'] = '15448979450000000000';
-	    $checkValues['aud'] = 'rustbeltrebellion.com';
-	    $checkValues['exp'] = $expires;
-	    $checkValues['nbf'] = $now;
-	    $checkValues['iat'] = $now;
-	    $checkValues['jti'] = '1234567890';
-	    $checkValues['age'] = '39';
-	    $checkValues['location'] = 'Davenport, Iowa';
-	    $checkValues['sex'] = 'male';
+		$this->assertEquals($validationResult, false);
 
-	    $this->assertEquals($claims['iss'], $checkValues['iss']);
-	    $this->assertEquals($claims['sub'], $checkValues['sub']);
-	    $this->assertEquals($claims['aud'], $checkValues['aud']);
-	    $this->assertEquals($claims['exp'], $checkValues['exp']);
-	    $this->assertEquals($claims['nbf'], $checkValues['nbf']);
-	    $this->assertEquals($claims['iat'], $checkValues['iat']);
-	    $this->assertEquals($claims['jti'], $checkValues['jti']);
-	    $this->assertEquals($claims['age'], $checkValues['age']);
-	    $this->assertEquals($claims['location'], $checkValues['location']);
-	    $this->assertEquals($claims['sex'], $checkValues['sex']);
-    }
+	}
 
-    public function testEnvironmentVarsLoad() {
+	public function testExpiredInvalidToken() {
+		// var_dump('testAlgorithmHeaderInvalidToken()');
+
+		$jwt = new Ehjwt();
+
+		$brokenToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
+
+		$validationResult = $jwt->validateToken($brokenToken);
+
+		$this->assertEquals($validationResult, false);
+
+	}
+
+	public function testEnvironmentVarsLoad() {
+		// var_dump('testEnvironmentVarsLoad()');
 
     	//$dsn = addslashes(mysql:host=localhost);
 		$dsn = 'mysql:host=localhost';
@@ -258,7 +356,8 @@ class ehjwtTest extends TestCase
 	    $this->assertEquals($claims['aud'], $checkValues['aud']);
     }
 
-    public function testEnvironmentVarsStrictLoad() {
+	public function testEnvironmentVarsStrictLoad() {
+		// var_dump('testEnvironmentVarsStrictLoad()');
 
     	//$dsn = addslashes(mysql:host=localhost);
 		$dsn = 'mysql:host=localhost';
@@ -301,111 +400,21 @@ class ehjwtTest extends TestCase
 
 	    $this->assertEquals($claims['iss'], $checkValues['iss']);
 	    $this->assertEquals($claims['aud'], $checkValues['aud']);
+
+
+    	putenv('ESJWT_DSN');
+
+        putenv('ESJWT_DB_USER');
+
+        putenv('ESJWT_DB_PASS');
+
+        putenv('ESJWT_JWT_SECRET');
+
+        putenv('ESJWT_ISS');
+
+        putenv('ESJWT_AUD');
+
+        putenv('ESJWT_USE_ENV_VARS');
     }
-
-    public function testChunksInvalidToken() {
-    	$secret = 'secret';
-
-		$jwt = new Ehjwt($secret);
-
-		$now = time();
-		$expires = time() + 30 * 60;
-
-		$standardClaims = array(
-	        'iss'=>'rustbeltrebellion.com',
-	        'sub'=>'15448979450000000000',
-	        'aud'=>'rustbeltrebellion.com',
-	        'exp'=>"$expires",
-	        'nbf'=>"$now",
-	        'iat'=>"$now",
-	        'jti'=>'1234567890'
-		);
-		$jwt->setStandardClaims($standardClaims);
-
-		$customClaims = array(
-			'age' => '39',
-			'sex' => 'male',
-			'location' => 'Davenport, Iowa'
-		);
-
-		$jwt->setCustomClaims($customClaims);
-
-		$jwt->createToken();
-
-		$token = $jwt->getToken();
-
-		$cutOffPoint = strpos($token, '.');
-
-		$brokenToken = substr( $token, $cutOffPoint + 1);
-
-		$this->assertEquals(Ehjwt::validateToken($brokenToken), false);
-    }
-
-    public function testInvalidToken() {
-    	$secret = 'secret';
-
-		$jwt = new Ehjwt($secret);
-
-		$now = time();
-		$expires = time() + 30 * 60;
-
-		$standardClaims = array(
-	        'iss'=>'rustbeltrebellion.com',
-	        'sub'=>'15448979450000000000',
-	        'aud'=>'rustbeltrebellion.com',
-	        'exp'=>"$expires",
-	        'nbf'=>"$now",
-	        'iat'=>"$now",
-	        'jti'=>'1234567890'
-		);
-		$jwt->setStandardClaims($standardClaims);
-
-		$customClaims = array(
-			'age' => '39',
-			'sex' => 'male',
-			'location' => 'Davenport, Iowa'
-		);
-
-		$jwt->setCustomClaims($customClaims);
-
-		$jwt->createToken();
-
-		$token = $jwt->getToken();
-
-		$newJwt = new Ehjwt('secret');
-
-		$newJwt->loadToken($token);
-
-		$claims = $newJwt->getClaims();
-
-		$checkValues = [];
-
-	    $checkValues['iss'] = 'rustbeltrebellion.com';
-	    $checkValues['sub'] = '15448979450000000000';
-	    $checkValues['aud'] = 'rustbeltrebellion.com';
-	    $checkValues['exp'] = $expires;
-	    $checkValues['nbf'] = $now;
-	    $checkValues['iat'] = $now;
-	    $checkValues['jti'] = '1234567890';
-	    $checkValues['age'] = '39';
-	    $checkValues['location'] = 'Davenport, Iowa';
-	    $checkValues['sex'] = 'male';
-
-	    $this->assertEquals($claims['iss'], $checkValues['iss']);
-	    $this->assertEquals($claims['sub'], $checkValues['sub']);
-	    $this->assertEquals($claims['aud'], $checkValues['aud']);
-	    $this->assertEquals($claims['exp'], $checkValues['exp']);
-	    $this->assertEquals($claims['nbf'], $checkValues['nbf']);
-	    $this->assertEquals($claims['iat'], $checkValues['iat']);
-	    $this->assertEquals($claims['jti'], $checkValues['jti']);
-	    $this->assertEquals($claims['age'], $checkValues['age']);
-	    $this->assertEquals($claims['location'], $checkValues['location']);
-	    $this->assertEquals($claims['sex'], $checkValues['sex']);
-    }
- //    public function testConfigFileVarsLoad() {
-	// 	$secret = 'secret';
-
- //    	$jwt = new Ehjwt($secret);
-
-	// }
 }
+
