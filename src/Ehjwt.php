@@ -413,49 +413,27 @@ class Ehjwt
             }
         }
 
-        //ToDo: all the database token stuff
-        if ('record for this token in revoked tokens exists') {
-            // 'Revoked'
+        // create DB connection
+        $dbh = new PDO($unpackedTokenBody['config']['dsn'], $unpackedTokenBody['config']['dbUser'], $unpackedTokenBody['config']['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
 
-            // clean out revoked token records if the UTC unix time ends in "0"
-            if (0 == (substr($utcTimeNow, -1) + 0)) {
+        // clean out revoked token records if the UTC unix time ends in "0"
+        if (0 == (substr($utcTimeNow, -1) + 0)) {
 
-                try {
-                    $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
-                    
-                    $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE exp =< $utcTimeNow");
-                    
-                    $stmt->execute();
+            try {
 
-                    $dbh = null;
-                    $stmt = null;
-                }
-
-                catch (PDOException $e) {
-                    //print "Error!: " . $e->getMessage() . "<br/>";
-                    die();
-                }
-
+                $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE exp =< $utcTimeNow");
+                
+                $stmt->execute();
             }
 
-            return false;
+            catch (PDOException $e) {
+                //print "Error!: " . $e->getMessage() . "<br/>";
+                die();
+            }
+
+                // clean up DB artifacts
+                $stmt = null;
         }
-
-        $this->createToken();
-
-        // verify the signature
-        $recreatedToken = $this->readToken();
-        $recreatedTokenParts = explode($recreatedToken);
-        $recreatedTokenSignature = $recreatedTokenParts[3];
-
-        if ($recreatedTokenSignature !== $loadedTokenSignature) {
-            // 'signature invalid, potential tampering
-            return false;
-        }
-
-        // is the token revoked?
-
-        $dbh = new PDO($unpackedTokenBody['config']['dsn'], $unpackedTokenBody['config']['dbUser'], $unpackedTokenBody['config']['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
 
         $stmt = $dbh->prepare("SELECT * FROM revoked_ehjwt where sub = ?");
         $stmt->bindParam(1, $unpackedTokenBody['sub']);
@@ -483,6 +461,23 @@ class Ehjwt
                 }
 
             }
+        }
+
+        // clean up DB artifacts
+        $row = null;
+        $stmt = null;
+        $dbh = null;
+
+        $this->createToken();
+
+        // verify the signature
+        $recreatedToken = $this->readToken();
+        $recreatedTokenParts = explode($recreatedToken);
+        $recreatedTokenSignature = $recreatedTokenParts[3];
+
+        if ($recreatedTokenSignature !== $loadedTokenSignature) {
+            // 'signature invalid, potential tampering
+            return false;
         }
 
 
