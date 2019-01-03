@@ -1,11 +1,14 @@
+<span style="color:red">I believe I have brought the library to a usable and critiquable state. As of now, January 3rd of 2019, consider this library development stage grade code.</span>
+
+I created this package because I didn't love the existing libraries out there. Also, this package has only a dependency on the PDO database driver avaialble.
+
 So, this is a low level library designed to:
 
 - Allow you to specify the config parameters via passing them as arguments in the Ehjwt object instantiation
 - Allow you to specify a path and config file or use a config file in a default location with a default name of config/ehjwt-conf.php
 - Allow you to specify the config parameters with environment variables
-- Allow you to specify an environment variable that prevents overriding the environment variables
-- Allow you to set environment variables to specify the encryption key and a database or other PDO compatible persistent data store particulars
-- Allow you to be confident about settings, my library uses your environment variables, config file, or arguments passed to the instantiation constructor in that order for all configurable values
+- Allow you to additionally specify an environment variable that prevents overriding the environment variable configuration options
+
 - Allow you to rest easy that the algorithm will always be HS256
 - Allow you to create a JWT Token string with standard "claims" some prefilled according to the config file
 - Allow you to append custom claims
@@ -15,16 +18,26 @@ So, this is a low level library designed to:
 - Allow you to read token claims
 - Allow you to validate a token
 - Allow you to revoke a token
-- Allow you to temporarily or permanently revoke all tokens associated with an identified user
+
+- Allow you to be confident about settings, my library uses your environment variables, config file, or arguments passed to the instantiation constructor in that order for all configurable values
+
+- Allow you to temporarily or permanently revoke all tokens associated with an identified user-- "banning" a user, admittedly, isn't part of the JWT standard
 
 ## Step 1 - Install:
 
-**Add via composer or git clone or good old cut/paste and require_once()**
+You will need a modern version of PHP installed.
 
+**Add via composer or git clone, or wget the class file, or good old cut/paste and require_once()**
+
+```bash
+composer require bradchesney79/effortless-hs256-jwt
+```
 
 **Supply the necessary particulars; a PDO DB DSN, a PDO DB user, a PDO DB password, and a "system secret"**
 
-- Make env vars available to PHP
+You may do this any combination of three ways, they supercede one another in this order options passed to the constructor supercedes config file provided options which override environment variable provided options.
+
+- Make env vars available to PHP*
 - Copy and edit the example config file to the config directory which shares the same parent directory as the composer vendor directory
 
 *--I use composer. But if I didn't, the parent directory of my webroot directory is where I would put it*
@@ -32,6 +45,8 @@ So, this is a low level library designed to:
 
 *Alternatively, you may skip using env vars or a config file and create the object with parameters as the configs to use as such:*
 *'$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);'*
+
+* Should you want to prevent developers from using a config file or options passed to the constructor, you may set ESJWT_USE_ENV_VARS as true to enforce usage of the environment variables-- it is an option available to you but it isn't fool proof.
 
 **Run the db install script that can be found in the schema directory**
 
