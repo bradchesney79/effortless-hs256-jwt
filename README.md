@@ -45,7 +45,9 @@ options passed to the constructor supercedes config file provided options which 
 
 
 *Alternatively, you may skip using env vars or a config file and create the object with parameters as the configs to use as such:*
-*'$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);'*
+```php
+$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword, $sub, $aud);'*
+```
 
 * Should you want to prevent developers from using a config file or options passed to the constructor, you may set ESJWT_USE_ENV_VARS as true to enforce usage of the environment variables-- it is an option available to you but it isn't fool proof.
 
@@ -112,7 +114,7 @@ Ensure that the phpdbg and xdebug extensions are avaialble to make developer lif
 
 Run the tests with the PHPUnit installed in the dev dependencies
 
-```php
+```bash
 vendor/bin/phpunit --coverage-clover /tmp/clover/clover.xml --coverage-html /tmp/clover
 ```
 
