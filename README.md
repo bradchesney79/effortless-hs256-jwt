@@ -35,7 +35,8 @@ composer require bradchesney79/effortless-hs256-jwt
 
 **Supply the necessary particulars; a PDO DB DSN, a PDO DB user, a PDO DB password, and a "system secret"**
 
-You may do this any combination of three ways, they supercede one another in this order options passed to the constructor supercedes config file provided options which override environment variable provided options.
+You may do this any combination of three ways, they supercede one another in this order:
+options passed to the constructor supercedes config file provided options which override environment variable provided options
 
 - Make env vars available to PHP*
 - Copy and edit the example config file to the config directory which shares the same parent directory as the composer vendor directory
