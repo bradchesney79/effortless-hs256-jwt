@@ -107,26 +107,30 @@ require_once 'path/bradchesney79/effortless-hs256-jwt/src/Ehjwt.php';
 
 ## Step A - Test:
 
+Ensure that the phpdbg and xdebug extensions are avaialble to make developer life easier on yourself
+
 Run the tests with the PHPUnit installed in the dev dependencies
 
 ```php
-./vendor/bin/phpunit 
+vendor/bin/phpunit --coverage-clover /tmp/clover/clover.xml --coverage-html /tmp/clover
 ```
 
 ToDo:
 
-- Finish the code that revokes tokens
+- Write last few tests for token validation
 
-- Write tests for token revocation
+- Make the library available on packagist
 
-- Finish the validation code
+- Finish code coverage phpdoc blocks for tests
 
-- Write tests for token validation
+- Make the README not awful
 
 - Use https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df as the basis for instructions on how to use this library
 
 
 Caveats:
+
+- I am not positive this library is production ready yet
 
 - I have made decisions that force you to use this library in the closest to best practices using a specific secret key as I could manage. Other libraries allow you more freedom-- potentially to shoot yourself in the foot.
 
