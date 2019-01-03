@@ -5,9 +5,16 @@ require 'src/Ehjwt.php';
 use PHPUnit\Framework\TestCase;
 use bradchesney79\Ehjwt;
 
+/**
+ * @coversDefaultClass \bradchesney79\Ehjwt
+ */
+
 class ehjwtTest extends TestCase
 {
 
+	 /**
+     * @coversNothing
+     */
 	public function testAssertTrueIsTrue() {
 		// var_dump('testAssertTrueIsTrue()');
 		// Even if the rest of the world is exploding,
@@ -15,6 +22,10 @@ class ehjwtTest extends TestCase
 		// You should at least have one passing test.
         $this->assertTrue(true);
     }
+
+     /**
+     * @covers ::__construct
+     */
 
     public function testSecretLoads() {
 		// var_dump('testSecretLoads()');
