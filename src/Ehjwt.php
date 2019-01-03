@@ -8,6 +8,8 @@
 
 namespace bradchesney79;
 
+use PDO;
+
 class Ehjwt
 {
     /*
@@ -103,7 +105,7 @@ class Ehjwt
 
     public function __construct(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null, string $sub = null, string $aud = null) {
 
-        var_dump('==========================================================');
+        // var_dump('==========================================================');
 
         // load configuration from environment variables
 
@@ -209,18 +211,6 @@ class Ehjwt
         $this->__construct($secret, $file, $dsn, $dbUser, $dbPassword, $sub, $aud);
     }
 
-
-
-    /**
-     * Load the configuration file.
-     *
-     * @return void
-     */
-    protected function load()
-    {
-        $this->config = require $this->file;
-    }
-
     public function createToken() {
         // create header
         $header = [
@@ -252,6 +242,8 @@ class Ehjwt
                 $tokenClaims[$key] = $value;
             }
         }
+
+        ksort($tokenClaims);
 
         // convert from arrays to JSON objects
 
@@ -301,37 +293,37 @@ class Ehjwt
         switch (json_last_error()) {
             case JSON_ERROR_NONE:
                 $error = ''; // JSON is valid // No error has occurred
-                continue 2;
+                break;
             case JSON_ERROR_DEPTH:
                 $error = 'The maximum stack depth has been exceeded.';
-                continue 2;
+                break;
             case JSON_ERROR_STATE_MISMATCH:
                 $error = 'Invalid or malformed JSON.';
-                continue 2;
+                break;
             case JSON_ERROR_CTRL_CHAR:
                 $error = 'Control character error, possibly incorrectly encoded.';
-                continue 2;
+                break;
             case JSON_ERROR_SYNTAX:
                 $error = 'Syntax error, malformed JSON.';
-                continue 2;
+                break;
             // PHP >= 5.3.3
             case JSON_ERROR_UTF8:
                 $error = 'Malformed UTF-8 characters, possibly incorrectly encoded.';
-                continue 2;
+                break;
             // PHP >= 5.5.0
             case JSON_ERROR_RECURSION:
                 $error = 'One or more recursive references in the value to be encoded.';
-                continue 2;
+                break;
             // PHP >= 5.5.0
             case JSON_ERROR_INF_OR_NAN:
                 $error = 'One or more NAN or INF values in the value to be encoded.';
-                continue 2;
+                break;
             case JSON_ERROR_UNSUPPORTED_TYPE:
                 $error = 'A value of a type that cannot be encoded was given.';
-                continue 2;
+                break;
             default:
                 $error = 'Unknown JSON error occured.';
-                continue 2;
+                break;
         }
 
         if ($error !== '') {
@@ -347,34 +339,34 @@ class Ehjwt
             case JSON_ERROR_NONE:
                 // JSON is valid, no error has occurred
                 $error = '';
-                continue 2;
+                break;
             case JSON_ERROR_DEPTH:
                 $error = 'The maximum stack depth has been exceeded.';
-                continue 2;
+                break;
             case JSON_ERROR_STATE_MISMATCH:
                 $error = 'Invalid or malformed JSON.';
-                continue 2;
+                break;
             case JSON_ERROR_CTRL_CHAR:
                 $error = 'Control character error, possibly incorrectly encoded.';
-                continue 2;
+                break;
             case JSON_ERROR_SYNTAX:
                 $error = 'Syntax error, malformed JSON.';
-                continue 2;
+                break;
             case JSON_ERROR_UTF8:
                 $error = 'Malformed UTF-8 characters, possibly incorrectly encoded.';
-                continue 2;
+                break;
             case JSON_ERROR_RECURSION:
                 $error = 'One or more recursive references in the value to be encoded.';
-                continue 2;
+                break;
             case JSON_ERROR_INF_OR_NAN:
                 $error = 'One or more NAN or INF values in the value to be encoded.';
-                continue 2;
+                break;
             case JSON_ERROR_UNSUPPORTED_TYPE:
                 $error = 'A value of a type that cannot be encoded was given.';
-                continue 2;
+                break;
             default:
                 $error = 'Unknown JSON error occured.';
-                continue 2;
+                break;
     }
 
         if ($error !== '') {
@@ -398,15 +390,17 @@ class Ehjwt
         $expiryTime = $unpackedTokenPayload['exp'];
 
         // a good JWT integration uses token expiration, I am forcing your hand
-        if (($utcTimeNow - $this->exp) > 0 ) {
+        if (($utcTimeNow - $expiryTime) > 0 ) {
             var_dump('expired');
             // 'Expired (exp)'
             return false;
         }
 
+        $notBeforeTime = $unpackedTokenPayload['nbf'];
+
         // if nbf is set
-        if (null !== $this->nbf) {
-            if ($this->nbf < $utcTimeNow) {
+        if (null !== $notBeforeTime) {
+            if ($notBeforeTime > $utcTimeNow) {
                 var_dump('too early');
                 // 'Too early for not before(nbf) value'
                 return false;
@@ -414,7 +408,7 @@ class Ehjwt
         }
 
         // create DB connection
-        $dbh = new PDO($unpackedTokenBody['config']['dsn'], $unpackedTokenBody['config']['dbUser'], $unpackedTokenBody['config']['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+        $dbh = new PDO($this->config[0]['dsn'], $this->config[0]['dbUser'], $this->config[0]['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
 
         // clean out revoked token records if the UTC unix time ends in "0"
         if (0 == (substr($utcTimeNow, -1) + 0)) {
@@ -436,7 +430,7 @@ class Ehjwt
         }
 
         $stmt = $dbh->prepare("SELECT * FROM revoked_ehjwt where sub = ?");
-        $stmt->bindParam(1, $unpackedTokenBody['sub']);
+        $stmt->bindParam(1, $unpackedTokenPayload['sub']);
 
         // get records for this sub
         if ($stmt->execute()) {
@@ -449,7 +443,7 @@ class Ehjwt
                     return false;
                 }
 
-                if($row['jti'] == $unpackedTokenBody['jti']) {
+                if($row['jti'] == $unpackedTokenPayload['jti']) {
                     // token is revoked
                     return false;
                 }
@@ -457,7 +451,7 @@ class Ehjwt
                 // remove records for expired tokens to keep the table small and snappy
                 if($row['exp'] > $utcTimeNow) {
                     // deleteRevocation record
-                    $this->deleteRecordFromRevocationTable($unpackedTokenBody['id']);
+                    $this->deleteRecordFromRevocationTable($unpackedTokenPayload['id']);
                 }
 
             }
@@ -471,11 +465,11 @@ class Ehjwt
         $this->createToken();
 
         // verify the signature
-        $recreatedToken = $this->readToken();
-        $recreatedTokenParts = explode($recreatedToken);
-        $recreatedTokenSignature = $recreatedTokenParts[3];
+        $recreatedToken = $this->getToken();
+        $recreatedTokenParts = explode('.', $recreatedToken);
+        $recreatedTokenSignature = $recreatedTokenParts[2];
 
-        if ($recreatedTokenSignature !== $loadedTokenSignature) {
+        if ($recreatedTokenSignature !== $tokenParts[2]) {
             // 'signature invalid, potential tampering
             return false;
         }

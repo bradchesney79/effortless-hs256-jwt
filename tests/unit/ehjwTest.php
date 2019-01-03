@@ -242,15 +242,11 @@ class ehjwtTest extends TestCase
 
 		$jwt->setCustomClaims($customClaims);
 
-		// $jwt->deleteStandardClaims('aud');
-
-		// $jwt->deleteCustomClaims('location');
-
 		$jwt->createToken();
 
 		$expectedAlgorithmChunk = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
-		$expectedPayloadChunk = 'eyJhZ2UiOiIzOSIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9';
-		$expectedCheckSumChunk = 'g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
+		$expectedPayloadChunk = 'eyJhZ2UiOiIzOSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwibmJmIjoiMTU0NjM1MjYyNCIsInNleCI6Im1hbGUiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9';
+		$expectedCheckSumChunk = 'RTo7dXtkifenk4AlglGB8-JL8pi_QnpY_47CMkUXDIg';
 
 		$jwtChunks = explode('.',$jwt->getToken());
 
@@ -278,8 +274,6 @@ class ehjwtTest extends TestCase
 
 		$validationResult = $jwt->validateToken($brokenToken);
 
-		var_dump($validationResult);
-
 		$this->assertEquals($validationResult, false);
 
 	}
@@ -293,7 +287,58 @@ class ehjwtTest extends TestCase
 
 		$validationResult = $jwt->validateToken($brokenToken);
 
-		var_dump($validationResult);
+		$this->assertEquals($validationResult, false);
+
+	}
+
+	public function testWrongAlgorithmHeaderInvalidToken() {
+
+			// var_dump('testWrongAlgorithmHeaderInvalidToken()');
+    	$secret = 'secret';
+
+		$jwt = new Ehjwt($secret, null, 'mysql:host=localhost;dbname=ehjwt', 'root', 'password', 'rustbeltrebellion.com', 'rustbeltrebellion.com');
+
+		$now = time();
+		$expires = time() + 30 * 60;
+
+
+
+		$standardClaims = array(
+	        'sub'=>'15448979450000000000',
+	        'exp'=>'1546353624',
+	        'nbf'=>'1546352624',
+	        'iat'=>'1546352624',
+	        'jti'=>'1234567890'
+		);
+		$jwt->setStandardClaims($standardClaims);
+
+		$customClaims = array(
+			'age' => '39',
+			'sex' => 'male',
+			'location' => 'Davenport, Iowa'
+		);
+
+		$jwt->setCustomClaims($customClaims);
+
+		$jwt->createToken();
+
+		$token = $jwt->getToken();
+
+		$tokenParts = explode('.', $token);
+
+		$this->assertEquals('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', $tokenParts[0]);
+	}
+
+	public function testBeforeNotBeforeInvalidToken() {
+		var_dump('testBeforeNotBeforeInvalidToken()');
+
+		$jwt = new Ehjwt('secret');
+
+		$brokenToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjIxNDc0ODM2NDAiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwibmJmIjoiMTk0NzQ4MzY0NyIsInNleCI6Im1hbGUiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.rGHGnyHMj3GODBB8XPa6chpl-IPFKdLfDJqlvih518Y';
+
+		$jwt->loadToken($brokenToken);
+
+		$validationResult = $jwt->validateToken($brokenToken);
 
 		$this->assertEquals($validationResult, false);
 
@@ -417,4 +462,3 @@ class ehjwtTest extends TestCase
         putenv('ESJWT_USE_ENV_VARS');
     }
 }
-
