@@ -46,7 +46,7 @@ options passed to the constructor supercedes config file provided options which 
 
 *Alternatively, you may skip using env vars or a config file and create the object with parameters as the configs to use as such:*
 ```php
-$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword, $sub, $aud);'*
+$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword, $sub, $aud);
 ```
 
 * Should you want to prevent developers from using a config file or options passed to the constructor, you may set ESJWT_USE_ENV_VARS as true to enforce usage of the environment variables-- it is an option available to you but it isn't fool proof.
@@ -127,6 +127,8 @@ ToDo:
 - Finish code coverage phpdoc blocks for tests
 
 - Make the README not awful
+
+- As part of making the README not awful, create actual usage instructions
 
 - Use https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df as the basis for instructions on how to use this library
 
