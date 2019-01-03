@@ -357,6 +357,86 @@ class ehjwtTest extends TestCase
 
 	}
 
+	public function testAddBannedRecord() {
+		var_dump('testBannedRecord()');
+
+		$jwt = new Ehjwt();
+
+		$now = time();
+		$expires = time() + 30 * 60;
+
+		$standardClaims = array(
+	        'sub'=> '15448979460000000000',
+	        'exp'=> $expires,
+	        'nbf'=> $now,
+	        'iat'=> $now,
+	        'jti'=>'1234567890'
+		);
+
+		$jwt->setStandardClaims($standardClaims);
+
+		$customClaims = array(
+			'age' => '39',
+			'sex' => 'male',
+			'location' => 'Davenport, Iowa'
+		);
+
+		$jwt->setCustomClaims($customClaims);
+
+		$jwt->createToken();
+
+		$token = $jwt->getToken();
+
+		$claims = $jwt->getClaims();
+
+		$jwt->addTokenRevocationRecord(0, $claims['sub'], $claims['exp'] + 30);
+
+		$validationResult = $jwt->validateToken($token);
+
+		print_r('$validationResult: ' . $validationResult);
+
+		$this->assertEquals(false, $validationResult);
+	}
+
+	public function testAddRevocationRecord() {
+		var_dump('testAddRevocationRecord()');
+
+		$jwt = new Ehjwt();
+
+		$now = time();
+		$expires = time() + 30 * 60;
+
+		$standardClaims = array(
+	        'sub'=> '15448979450000000000',
+	        'exp'=> $expires,
+	        'nbf'=> $now,
+	        'iat'=> $now,
+	        'jti'=>'1234567890'
+		);
+
+		$jwt->setStandardClaims($standardClaims);
+
+		$customClaims = array(
+			'age' => '39',
+			'sex' => 'male',
+			'location' => 'Davenport, Iowa'
+		);
+
+		$jwt->setCustomClaims($customClaims);
+
+		$jwt->createToken();
+
+		$token = $jwt->getToken();
+
+		$claims = $jwt->getClaims();
+
+		$jwt->addTokenRevocationRecord($claims['jti'], $claims['sub'], $claims['exp'] + 30);
+
+		$validationResult = $jwt->validateToken($token);
+
+		$this->assertEquals(false, $validationResult);
+	}
+
 	public function testEnvironmentVarsLoad() {
 		// var_dump('testEnvironmentVarsLoad()');
 

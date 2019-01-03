@@ -166,7 +166,7 @@ class Ehjwt
 
             // check for config file existing before actual load
             if (file_exists($this->file)) {
-                $this->config[] = require $this->file;
+                $this->config = require $this->file;
             }
         }
 
@@ -408,7 +408,7 @@ class Ehjwt
         }
 
         // create DB connection
-        $dbh = new PDO($this->config[0]['dsn'], $this->config[0]['dbUser'], $this->config[0]['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
 
         // clean out revoked token records if the UTC unix time ends in "0"
         if (0 == (substr($utcTimeNow, -1) + 0)) {
@@ -435,23 +435,25 @@ class Ehjwt
         // get records for this sub
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()) {
-            //print_r($row);
+            print_r($row);
 
             // any records where jti is 0
-                if($row['jti'] == 0 && $row['exp'] < $utcTimeNow) {
+                if($row['jti'] == 0 && $row['exp'] > $utcTimeNow) {
+                    var_dump('banned');
                     // user is under an unexpired ban condition
                     return false;
                 }
 
                 if($row['jti'] == $unpackedTokenPayload['jti']) {
+                    var_dump('revoked');
                     // token is revoked
                     return false;
                 }
 
                 // remove records for expired tokens to keep the table small and snappy
-                if($row['exp'] > $utcTimeNow) {
+                if($row['exp'] < $utcTimeNow) {
                     // deleteRevocation record
-                    $this->deleteRecordFromRevocationTable($unpackedTokenPayload['id']);
+                    $this->deleteRecordFromRevocationTable($row['id']);
                 }
 
             }
@@ -558,8 +560,8 @@ class Ehjwt
     public function addTokenRevocationRecord(string $jti, string $sub, string $revocationExpiration) {
 
         // revoke a token with specific particulars
-
-        writeRecordToRevocationTable($jti, $sub, $revocationExpiration);
+        var_dump('addTokenRevocationRecord()');
+        $this->writeRecordToRevocationTable($jti, $sub, $revocationExpiration);
 
     }
 
@@ -568,6 +570,8 @@ class Ehjwt
         // unpack the token, add it to the revocation table
 
         $this->loadToken($token);
+
+        $revocationExpiration = $this->exp + 30;
 
         // only add if the token is valid-- don't let imposters kill otherwise valid tokens
         if ($this->validateToken($this->token)) {
@@ -603,7 +607,7 @@ class Ehjwt
     }
 
     private function writeRecordToRevocationTable(string $jti, string $sub, string $exp) {
-
+        var_dump('writeRecordToRevocationTable()');
         try {
             $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
             
@@ -612,14 +616,9 @@ class Ehjwt
             $stmt->bindParam(1, $jti);
             $stmt->bindParam(2, $sub);
             $stmt->bindParam(3, $exp);
+
             $stmt->execute();
 
-            // $results = $dbh->query('SELECT * from revoked_ehjwt');
-
-            // foreach($results as $row) {
-            //     print_r($row);
-            // }
-            
             $dbh = null;
             $stmt = null;
         }
