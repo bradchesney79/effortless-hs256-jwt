@@ -11,8 +11,14 @@
     ],
     "require": {
     },
-        "require-dev": {
+    "require-dev": {
+
+
+        "phpunit/php-code-coverage": "^6.1",
         "phpunit/phpunit": "^7"
+    },
+    "suggest": {
+        "ext-phpdbg": "^0"
     },
     "autoload": {
         "psr-4": {
@@ -21,9 +27,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-
             "bradchesney79\\Ehjwt\\Test\\": "tests/"
-
         }
     },
     "license": "Unlicense",
