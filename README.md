@@ -135,6 +135,8 @@ ToDo:
 
 Caveats:
 
+- Use is limited to PHP 7.x platforms
+
 - I am not positive this library is production ready yet
 
 - I have made decisions that force you to use this library in the closest to best practices using a specific secret key as I could manage. Other libraries allow you more freedom-- potentially to shoot yourself in the foot.
