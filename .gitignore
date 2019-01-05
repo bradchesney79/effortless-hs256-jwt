@@ -1,3 +1,4 @@
-vendor
-config/ehjwt-conf.php
+build
 composer.lock
+config/ehjwt-conf.php
+vendor
