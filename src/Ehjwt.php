@@ -103,7 +103,7 @@ class Ehjwt
      */
     public $error;
 
-    public function __construct(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null, string $sub = null, string $aud = null) {
+    public function __construct(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null, string $iss = null, string $aud = null) {
 
         // var_dump('==========================================================');
 
@@ -117,44 +117,6 @@ class Ehjwt
         $audEnv = getenv('ESJWT_AUD');
         $useEnvVars = getenv('ESJWT_USE_ENV_VARS');
 
-        if ($dsnEnv) {
-
-            $this->config['dsn'] = $dsnEnv;
-
-        }
-
-        if ($dbUserEnv) {
-
-            $this->config['dbUser'] = $dbUserEnv;
-
-        }
-
-        if ($dbPasswordEnv) {
-
-            $this->config['dbPassword'] = $dbPasswordEnv;
-
-        }
-
-        if ($jwtSecretEnv) {
-
-            $this->jwtSecret = $jwtSecretEnv;
-
-        }
-
-        if ($issEnv) {
-
-            $this->iss = $issEnv;
-
-        }
-
-        if ($audEnv) {
-
-            $this->aud = $audEnv;
-
-        }
-
-        // load configuration from a config file
-
         if ($useEnvVars == false) {
             if (is_null($file)) {
                 $this->file = __DIR__.'/../config/ehjwt-conf.php';
@@ -163,52 +125,44 @@ class Ehjwt
                 $this->file = $file;
             }
 
-
             // check for config file existing before actual load
             if (file_exists($this->file)) {
-                $this->config = require $this->file;
+                $config = require $this->file;
             }
-        }
 
-        // load the jwtSecret from the passed argument string
+            unset($file);
 
-        if (isset($secret) && $secret !== null && $useEnvVars == false) {
-            $this->jwtSecret = $secret;
+            $this->config['dsn'] = $dsn ?? $config['dsn'] ?? $dsnEnv;
+
+            $this->config['dbUser'] = $dbUser ?? $config['dbUser'] ?? $dbUserEnv;
+
+            $this->config['dbPassword'] = $dbPassword ?? $config['dbPassword'] ?? $dbPasswordEnv;
+
+            $this->jwtSecret = $secret ?? $config['jwtSecret'] ?? $jwtSecretEnv;
+
+            $this->iss = $iss ?? $config['iss'] ?? $issEnv;
+
+            $this->aud = $iss ?? $config['aud'] ?? $audEnv;
+
         }
         else {
-            if (isset($this->jwtSecret)) {
-                //just use the env var value
-            }
-            else {
-                //use the config file value
-                $this->jwtSecret = $this->jwtSecret;
-            }
+
+            $this->config['dsn'] = $dsnEnv;
+
+            $this->config['dbUser'] = $dbUserEnv;
+
+            $this->config['dbPassword'] = $dbPasswordEnv;
+
+            $this->jwtSecret = $jwtSecretEnv;
+
+            $this->iss = $issEnv;
+
+            $this->aud = $audEnv;
+
         }
 
-        if (isset($dsn) && $useEnvVars == false) {
-            $this->config['dsn'] = $dsn;
-        }
+        unset($dsnEnv, $dbUserEnv, $dbPasswordEnv, $jwtSecretEnv, $issEnv, $audEnv, $useEnvVars);
 
-        if (isset($dbUser) && $useEnvVars == false) {
-            $this->config['$dbUser'] = $dbUser;
-        }
-
-        if (isset($dbPassword) && $useEnvVars == false) {
-            $this->config['dbPassword'] = $dbPassword;
-        }
-
-        if (isset($iss) && $useEnvVars == false) {
-            $this->iss = $iss;
-        }
-
-        if (isset($aud) && $useEnvVars == false) {
-            $this->aud = $aud;
-        }
-
-    }
-
-    public function Ehjwt(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null, string $sub = null, string $aud = null) {
-        $this->__construct($secret, $file, $dsn, $dbUser, $dbPassword, $sub, $aud);
     }
 
     public function createToken() {
