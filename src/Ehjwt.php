@@ -234,13 +234,13 @@ class Ehjwt
         $tokenParts = explode('.', $tokenString);
 
         if (3 !== count($tokenParts)) {
-            var_dump('segments');
+            //var_dump('segments');
             // 'Incorrect quantity of segments'
             return false;
         }
 
 
-        var_dump('header');
+        //var_dump('header');
         $unpackedTokenHeader = json_decode($this->base64UrlDecode($tokenParts[0]), true);
 
 
@@ -281,12 +281,12 @@ class Ehjwt
         }
 
         if ($error !== '') {
-            var_dump('undecodable header');
+            //var_dump('undecodable header');
             // 'Header does not decode'
             return false;
         }
 
-        var_dump('payload');
+        //var_dump('payload');
         $unpackedTokenPayload = json_decode($this->base64UrlDecode($tokenParts[1]), true);
 
         switch (json_last_error()) {
@@ -324,7 +324,7 @@ class Ehjwt
     }
 
         if ($error !== '') {
-            var_dump('undecodable payload');
+            //var_dump('undecodable payload');
             // 'Payload does not decode'
             return false;
         }
@@ -332,7 +332,7 @@ class Ehjwt
         $unpackedTokenSignature = $tokenParts[2];
 
         if ($unpackedTokenHeader['alg'] !== 'HS256') {
-            var_dump('algorithm');
+            //var_dump('algorithm');
             // 'Wrong algorithm'
             return false;
         }
@@ -345,7 +345,7 @@ class Ehjwt
 
         // a good JWT integration uses token expiration, I am forcing your hand
         if (($utcTimeNow - $expiryTime) > 0 ) {
-            var_dump('expired');
+            //var_dump('expired');
             // 'Expired (exp)'
             return false;
         }
@@ -355,7 +355,7 @@ class Ehjwt
         // if nbf is set
         if (null !== $notBeforeTime) {
             if ($notBeforeTime > $utcTimeNow) {
-                var_dump('too early');
+                //var_dump('too early');
                 // 'Too early for not before(nbf) value'
                 return false;
             }
@@ -393,13 +393,13 @@ class Ehjwt
 
             // any records where jti is 0
                 if($row['jti'] == 0 && $row['exp'] > $utcTimeNow) {
-                    var_dump('banned');
+                    //var_dump('banned');
                     // user is under an unexpired ban condition
                     return false;
                 }
 
                 if($row['jti'] == $unpackedTokenPayload['jti']) {
-                    var_dump('revoked');
+                    //var_dump('revoked');
                     // token is revoked
                     return false;
                 }
@@ -514,7 +514,7 @@ class Ehjwt
     public function addTokenRevocationRecord(string $jti, string $sub, string $revocationExpiration) {
 
         // revoke a token with specific particulars
-        var_dump('addTokenRevocationRecord()');
+        // var_dump('addTokenRevocationRecord()');
         $this->writeRecordToRevocationTable($jti, $sub, $revocationExpiration);
 
     }
@@ -561,7 +561,7 @@ class Ehjwt
     }
 
     private function writeRecordToRevocationTable(string $jti, string $sub, string $exp) {
-        var_dump('writeRecordToRevocationTable()');
+        // var_dump('writeRecordToRevocationTable()');
         try {
             $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
             
