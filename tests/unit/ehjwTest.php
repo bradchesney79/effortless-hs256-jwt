@@ -218,7 +218,7 @@ class ehjwtTest extends TestCase
 		// var_dump('testCreateTokenWithConstructorParameters()');
     	$secret = 'secret';
 
-		$jwt = new Ehjwt($secret, null, 'mysql:host=localhost;dbname=ehjwt', 'root', 'password', 'rustbeltrebellion.com', 'rustbeltrebellion.com');
+		$jwt = new Ehjwt($secret, null, 'mysql:host=127.0.0.1;dbname=ehjwts', 'roots', 'passwords', 'rustbeltrebellions.com', 'rustbeltrebellions.com');
 
 		$now = time();
 		$expires = time() + 30 * 60;
@@ -256,8 +256,8 @@ class ehjwtTest extends TestCase
 		$jwt->createToken();
 
 		$expectedAlgorithmChunk = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
-		$expectedPayloadChunk = 'eyJhZ2UiOiIzOSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwibmJmIjoiMTU0NjM1MjYyNCIsInNleCI6Im1hbGUiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9';
-		$expectedCheckSumChunk = 'RTo7dXtkifenk4AlglGB8-JL8pi_QnpY_47CMkUXDIg';
+		$expectedPayloadChunk = 'eyJhZ2UiOiIzOSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9ucy5jb20iLCJleHAiOiIxNTQ2MzUzNjI0IiwiaWF0IjoiMTU0NjM1MjYyNCIsImlzcyI6InJ1c3RiZWx0cmViZWxsaW9ucy5jb20iLCJqdGkiOiIxMjM0NTY3ODkwIiwibG9jYXRpb24iOiJEYXZlbnBvcnQsIElvd2EiLCJuYmYiOiIxNTQ2MzUyNjI0Iiwic2V4IjoibWFsZSIsInN1YiI6IjE1NDQ4OTc5NDUwMDAwMDAwMDAwIn0';
+		$expectedCheckSumChunk = '4x7nDT8UmmZx1wkG7B4pj_GJ8AV06XF_pjEv1JoQViE';
 
 		$jwtChunks = explode('.',$jwt->getToken());
 
