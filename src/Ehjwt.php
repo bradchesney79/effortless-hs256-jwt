@@ -375,8 +375,8 @@ class Ehjwt
             }
 
             catch (PDOException $e) {
-                //print "Error!: " . $e->getMessage() . "<br/>";
-                die();
+                error_log('Ehjwt clear old revocation records error: ' . $e->getMessage());
+                throw new EhjwtClearOldRevocationRecordsFailException('Ehjwt clear old revocation records error: ' . $e->getMessage());
             }
 
                 // clean up DB artifacts
@@ -389,7 +389,7 @@ class Ehjwt
         // get records for this sub
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()) {
-            print_r($row);
+            // print_r($row);
 
             // any records where jti is 0
                 if($row['jti'] == 0 && $row['exp'] > $utcTimeNow) {
@@ -499,7 +499,7 @@ class Ehjwt
 
     public function setStandardClaims(array $standardClaims) {
         foreach ($standardClaims as $claimKey => $value) {
-            if ($value != null) {
+            if (mb_check_encoding($value, 'UTF-8')) {
                 if (in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true )) {
                     $this->{$claimKey} = $value;
                 }
@@ -507,6 +507,10 @@ class Ehjwt
                 else {
                     $this->{$claimKey} = null;
                 }
+            }
+            else {
+                error_log('Ehjwt standard claim non-UTF-8 input string encoding error.');
+                throw new EhjwtCustomClaimsInputStringException('Ehjwt standard claim non-UTF-8 input string encoding error.');
             }
         }
     }
@@ -554,8 +558,12 @@ class Ehjwt
 
     public function setCustomClaims(array $customClaims) {
         foreach ($customClaims as $claimKey => $value) {
-            if ($value != null) {
+            if (mb_check_encoding($value, 'UTF-8')) {
                 $this->customClaims[$claimKey] = $value;
+            }
+            else {
+                error_log('Ehjwt custom claim non-UTF-8 input string encoding error.');
+                throw new EhjwtCustomClaimsInputStringException('Ehjwt custom claim non-UTF-8 input string encoding error.');
             }
         }
     }
@@ -578,8 +586,8 @@ class Ehjwt
         }
 
         catch (PDOException $e) {
-            //print "Error!: " . $e->getMessage() . "<br/>";
-            die();
+            error_log('Ehjwt write revocation record error: ' . $e->getMessage());
+            throw new EhjwtWriteRevocationRecordFailException('Ehjwt write revocation record error: ' . $e->getMessage());
         }
 
     }
@@ -597,8 +605,8 @@ class Ehjwt
         }
 
         catch (PDOException $e) {
-            //print "Error!: " . $e->getMessage() . "<br/>";
-            die();
+            error_log('Ehjwt delete revocation record error: ' . $e->getMessage());
+            throw new EhjwtDeleteRevocationRecordFailException('Ehjwt write revocation record error: ' . $e->getMessage());
         }
 
     }
@@ -637,3 +645,9 @@ class Ehjwt
         }
     }
 }
+
+// 
+
+// DB Exceptions
+class EhjwtWriteRevocationRecordFailException extends \Exception {};
+class EhjwtDeleteRevocationRecordFailException extends \Exception {};

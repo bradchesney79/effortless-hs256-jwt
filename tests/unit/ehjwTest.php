@@ -341,7 +341,7 @@ class ehjwtTest extends TestCase
 	}
 
 	public function testBeforeNotBeforeInvalidToken() {
-		var_dump('testBeforeNotBeforeInvalidToken()');
+		//var_dump('testBeforeNotBeforeInvalidToken()');
 
 		$jwt = new Ehjwt('secret');
 
@@ -369,7 +369,7 @@ class ehjwtTest extends TestCase
 	}
 
 	public function testAddBannedRecord() {
-		var_dump('testBannedRecord()');
+		// var_dump('testBannedRecord()');
 
 		$jwt = new Ehjwt();
 
@@ -404,13 +404,13 @@ class ehjwtTest extends TestCase
 
 		$validationResult = $jwt->validateToken($token);
 
-		print_r('$validationResult: ' . $validationResult);
+		// print_r('$validationResult: ' . $validationResult);
 
 		$this->assertEquals(false, $validationResult);
 	}
 
 	public function testAddRevocationRecord() {
-		var_dump('testAddRevocationRecord()');
+		// var_dump('testAddRevocationRecord()');
 
 		$jwt = new Ehjwt();
 
