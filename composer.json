@@ -12,6 +12,7 @@
     "require": {
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.14",
         "phpunit/php-code-coverage": "^6.1",
         "phpunit/phpunit": "^7"
     },
