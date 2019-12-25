@@ -103,6 +103,14 @@ class Ehjwt
      */
     public $error;
 
+    private function enforceUsingEnvVars() {
+        $useEnvVars = getenv('ESJWT_USE_ENV_VARS');
+        if ($useEnvVars == "true") {
+            return true;
+        }
+        return false;
+    }
+
     public function __construct(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null, string $iss = null, string $aud = null) {
 
         // var_dump('==========================================================');
@@ -115,9 +123,26 @@ class Ehjwt
         $jwtSecretEnv = getenv('ESJWT_JWT_SECRET');
         $issEnv = getenv('ESJWT_ISS');
         $audEnv = getenv('ESJWT_AUD');
-        $useEnvVars = getenv('ESJWT_USE_ENV_VARS');
+        
 
-        if ($useEnvVars == false) {
+    
+
+        if ($enforceUsingEnvVars()) {
+            $this->config['dsn'] = $dsnEnv;
+
+            $this->config['dbUser'] = $dbUserEnv;
+
+            $this->config['dbPassword'] = $dbPasswordEnv;
+
+            $this->jwtSecret = $jwtSecretEnv;
+
+            $this->iss = $issEnv;
+
+            $this->aud = $audEnv;
+
+            return true;
+        }
+        else {
             if (is_null($file)) {
                 $this->file = __DIR__.'/../config/ehjwt-conf.php';
             }
@@ -143,21 +168,6 @@ class Ehjwt
             $this->iss = $iss ?? $config['iss'] ?? $issEnv;
 
             $this->aud = $iss ?? $config['aud'] ?? $audEnv;
-
-        }
-        else {
-
-            $this->config['dsn'] = $dsnEnv;
-
-            $this->config['dbUser'] = $dbUserEnv;
-
-            $this->config['dbPassword'] = $dbPasswordEnv;
-
-            $this->jwtSecret = $jwtSecretEnv;
-
-            $this->iss = $issEnv;
-
-            $this->aud = $audEnv;
 
         }
 
