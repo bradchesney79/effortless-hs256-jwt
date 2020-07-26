@@ -12,449 +12,458 @@ use bradchesney79\Ehjwt;
 class ehjwtTest extends TestCase
 {
 
-	 /**
+     /**
      * @coversNothing
      */
-	public function testAssertTrueIsTrue() {
-		// var_dump('testAssertTrueIsTrue()');
-		// Even if the rest of the world is exploding,
-		// this test should pass.
-		// You should at least have one passing test.
+    public function testAssertTrueIsTrue()
+    {
+        // var_dump('testAssertTrueIsTrue()');
+        // Even if the rest of the world is exploding,
+        // this test should pass.
+        // You should at least have one passing test.
         $this->assertTrue(true);
     }
 
-     /**
-     * @covers ::__construct
-     */
+    /**
+    * @covers ::__construct
+    */
 
-    public function testSecretLoads() {
-		// var_dump('testSecretLoads()');
-    	$secret = 'secret';
+    public function testSecretLoads()
+    {
+        // var_dump('testSecretLoads()');
+        $secret = 'secret';
 
-		$reflectionClass = new ReflectionClass('bradchesney79\Ehjwt');
-		$reflectionProperty = $reflectionClass->getProperty('jwtSecret');
-		$reflectionProperty->setAccessible(true);
+        $reflectionClass = new ReflectionClass('bradchesney79\Ehjwt');
+        $reflectionProperty = $reflectionClass->getProperty('jwtSecret');
+        $reflectionProperty->setAccessible(true);
 
-		// Check that the secret is set by the __construct function
-		$this->assertEquals($secret, $reflectionProperty->getValue(new Ehjwt('secret')));
+        // Check that the secret is set by the __construct function
+        $this->assertEquals($secret, $reflectionProperty->getValue(new Ehjwt('secret')));
     }
 
 
-    public function testCreateToken() {
-		// var_dump('testCreateToken()');
-    	$secret = 'secret';
+    public function testCreateToken()
+    {
+        // var_dump('testCreateToken()');
+        $secret = 'secret';
 
-		$jwt = new Ehjwt($secret);
+        $jwt = new Ehjwt($secret);
 
-		$now = time();
-		$expires = time() + 30 * 60;
+        $now = time();
+        $expires = time() + 30 * 60;
 
-/*
-        iss: issuer, the website that issued the token
-        sub: subject, the id of the entity being granted the token 
-            (int has an unsigned, numeric limit of 4294967295)
-            (bigint has an unsigned, numeric limit of 18446744073709551615)
-        	(unix epoch as of "now" 1544897945)
-		aud: audience, the users of the token-- generally a url or string
-        exp: expires, the UTC UNIX epoch time stamp of when the token is no longer valid
-        nbf: not before, the UTC UNIX epoch time stamp of when the token becomes valid
-        iat: issued at, the UTC UNIX epoch time stamp of when the token was issued
-        jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation 
-*/
+        /*
+                iss: issuer, the website that issued the token
+                sub: subject, the id of the entity being granted the token
+                    (int has an unsigned, numeric limit of 4294967295)
+                    (bigint has an unsigned, numeric limit of 18446744073709551615)
+                    (unix epoch as of "now" 1544897945)
+                aud: audience, the users of the token-- generally a url or string
+                exp: expires, the UTC UNIX epoch time stamp of when the token is no longer valid
+                nbf: not before, the UTC UNIX epoch time stamp of when the token becomes valid
+                iat: issued at, the UTC UNIX epoch time stamp of when the token was issued
+                jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation
+        */
 
-		$standardClaims = array(
-	        'iss'=>'rustbeltrebellion.com',
-	        'sub'=>'15448979450000000000',
-	        'aud'=>'rustbeltrebellion.com',
-	        'exp'=>"$expires",
-	        'nbf'=>"$now",
-	        'iat'=>"$now",
-	        'jti'=>'1234567890'
-		);
-		$jwt->setStandardClaims($standardClaims);
+        $standardClaims = array(
+            'iss'=>'rustbeltrebellion.com',
+            'sub'=>'15448979450000000000',
+            'aud'=>'rustbeltrebellion.com',
+            'exp'=>"$expires",
+            'nbf'=>"$now",
+            'iat'=>"$now",
+            'jti'=>'1234567890'
+        );
+        $jwt->setStandardClaims($standardClaims);
 
-		$customClaims = array(
-			'age' => '39',
-			'sex' => 'male',
-			'location' => 'Davenport, Iowa'
-		);
+        $customClaims = array(
+            'age' => '39',
+            'sex' => 'male',
+            'location' => 'Davenport, Iowa'
+        );
 
-		$jwt->setCustomClaims($customClaims);
+        $jwt->setCustomClaims($customClaims);
 
-		// $jwt->deleteStandardClaims('aud');
+        // $jwt->deleteStandardClaims('aud');
 
-		// $jwt->deleteCustomClaims('location');
+        // $jwt->deleteCustomClaims('location');
 
-		$jwt->createToken();
+        $jwt->createToken();
 
-		$expectedAlgorithmChunk = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+        $expectedAlgorithmChunk = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
 
-		$jwtChunks = explode('.',$jwt->getToken());
+        $jwtChunks = explode('.', $jwt->getToken());
 
-		$jwtChunksCount = count($jwtChunks);
+        $jwtChunksCount = count($jwtChunks);
 
-		$actualAlgorithmChunk = $jwtChunks[0];
+        $actualAlgorithmChunk = $jwtChunks[0];
 
-		// Check that there are three parts to the JWT
-		$this->assertEquals(3, $jwtChunksCount);
+        // Check that there are three parts to the JWT
+        $this->assertEquals(3, $jwtChunksCount);
 
-		// Check that the algorithm chunk is predictably HS256
-		$this->assertEquals($expectedAlgorithmChunk, $actualAlgorithmChunk);
+        // Check that the algorithm chunk is predictably HS256
+        $this->assertEquals($expectedAlgorithmChunk, $actualAlgorithmChunk);
     }
 
    
 
-    public function testLoadToken() {
-		// var_dump('testLoadToken()');
-    	    	$secret = 'secret';
+    public function testLoadToken()
+    {
+        // var_dump('testLoadToken()');
+        $secret = 'secret';
 
-		$jwt = new Ehjwt($secret);
+        $jwt = new Ehjwt($secret);
 
-		$now = time();
-		$expires = time() + 30 * 60;
+        $now = time();
+        $expires = time() + 30 * 60;
 
-		$standardClaims = array(
-	        'iss'=>'rustbeltrebellion.com',
-	        'sub'=>'15448979450000000000',
-	        'aud'=>'rustbeltrebellion.com',
-	        'exp'=>"$expires",
-	        'nbf'=>"$now",
-	        'iat'=>"$now",
-	        'jti'=>'1234567890'
-		);
-		$jwt->setStandardClaims($standardClaims);
+        $standardClaims = array(
+            'iss'=>'rustbeltrebellion.com',
+            'sub'=>'15448979450000000000',
+            'aud'=>'rustbeltrebellion.com',
+            'exp'=>"$expires",
+            'nbf'=>"$now",
+            'iat'=>"$now",
+            'jti'=>'1234567890'
+        );
+        $jwt->setStandardClaims($standardClaims);
 
-		$customClaims = array(
-			'age' => '39',
-			'sex' => 'male',
-			'location' => 'Davenport, Iowa'
-		);
+        $customClaims = array(
+            'age' => '39',
+            'sex' => 'male',
+            'location' => 'Davenport, Iowa'
+        );
 
-		$jwt->setCustomClaims($customClaims);
+        $jwt->setCustomClaims($customClaims);
 
-		$jwt->createToken();
+        $jwt->createToken();
 
-		$token = $jwt->getToken();
+        $token = $jwt->getToken();
 
-		$newJwt = new Ehjwt('secret');
+        $newJwt = new Ehjwt('secret');
 
-		$newJwt->loadToken($token);
+        $newJwt->loadToken($token);
 
-		$claims = $newJwt->getClaims();
+        $claims = $newJwt->getClaims();
 
-		$checkValues = [];
+        $checkValues = [];
 
-	    $checkValues['iss'] = 'rustbeltrebellion.com';
-	    $checkValues['sub'] = '15448979450000000000';
-	    $checkValues['aud'] = 'rustbeltrebellion.com';
-	    $checkValues['exp'] = $expires;
-	    $checkValues['nbf'] = $now;
-	    $checkValues['iat'] = $now;
-	    $checkValues['jti'] = '1234567890';
-	    $checkValues['age'] = '39';
-	    $checkValues['location'] = 'Davenport, Iowa';
-	    $checkValues['sex'] = 'male';
+        $checkValues['iss'] = 'rustbeltrebellion.com';
+        $checkValues['sub'] = '15448979450000000000';
+        $checkValues['aud'] = 'rustbeltrebellion.com';
+        $checkValues['exp'] = $expires;
+        $checkValues['nbf'] = $now;
+        $checkValues['iat'] = $now;
+        $checkValues['jti'] = '1234567890';
+        $checkValues['age'] = '39';
+        $checkValues['location'] = 'Davenport, Iowa';
+        $checkValues['sex'] = 'male';
 
-	    $this->assertEquals($claims['iss'], $checkValues['iss']);
-	    $this->assertEquals($claims['sub'], $checkValues['sub']);
-	    $this->assertEquals($claims['aud'], $checkValues['aud']);
-	    $this->assertEquals($claims['exp'], $checkValues['exp']);
-	    $this->assertEquals($claims['nbf'], $checkValues['nbf']);
-	    $this->assertEquals($claims['iat'], $checkValues['iat']);
-	    $this->assertEquals($claims['jti'], $checkValues['jti']);
-	    $this->assertEquals($claims['age'], $checkValues['age']);
-	    $this->assertEquals($claims['location'], $checkValues['location']);
-	    $this->assertEquals($claims['sex'], $checkValues['sex']);
+        $this->assertEquals($claims['iss'], $checkValues['iss']);
+        $this->assertEquals($claims['sub'], $checkValues['sub']);
+        $this->assertEquals($claims['aud'], $checkValues['aud']);
+        $this->assertEquals($claims['exp'], $checkValues['exp']);
+        $this->assertEquals($claims['nbf'], $checkValues['nbf']);
+        $this->assertEquals($claims['iat'], $checkValues['iat']);
+        $this->assertEquals($claims['jti'], $checkValues['jti']);
+        $this->assertEquals($claims['age'], $checkValues['age']);
+        $this->assertEquals($claims['location'], $checkValues['location']);
+        $this->assertEquals($claims['sex'], $checkValues['sex']);
     }
 
     
 
     
 
-  //   public function testChunksInvalidToken() {
-		// var_dump('testChunksInvalidToken()');
-  //   	$secret = 'secret';
+    //   public function testChunksInvalidToken() {
+    // var_dump('testChunksInvalidToken()');
+    //   	$secret = 'secret';
 
-		// $jwt = new Ehjwt($secret);
+    // $jwt = new Ehjwt($secret);
 
-		// $now = time();
-		// $expires = time() + 30 * 60;
+    // $now = time();
+    // $expires = time() + 30 * 60;
 
-		// $standardClaims = array(
-	 //        'iss'=>'rustbeltrebellion.com',
-	 //        'sub'=>'15448979450000000000',
-	 //        'aud'=>'rustbeltrebellion.com',
-	 //        'exp'=>"$expires",
-	 //        'nbf'=>"$now",
-	 //        'iat'=>"$now",
-	 //        'jti'=>'1234567890'
-		// );
-		// $jwt->setStandardClaims($standardClaims);
+    // $standardClaims = array(
+    //        'iss'=>'rustbeltrebellion.com',
+    //        'sub'=>'15448979450000000000',
+    //        'aud'=>'rustbeltrebellion.com',
+    //        'exp'=>"$expires",
+    //        'nbf'=>"$now",
+    //        'iat'=>"$now",
+    //        'jti'=>'1234567890'
+    // );
+    // $jwt->setStandardClaims($standardClaims);
 
-		// $customClaims = array(
-		// 	'age' => '39',
-		// 	'sex' => 'male',
-		// 	'location' => 'Davenport, Iowa'
-		// );
+    // $customClaims = array(
+    // 	'age' => '39',
+    // 	'sex' => 'male',
+    // 	'location' => 'Davenport, Iowa'
+    // );
 
-		// $jwt->setCustomClaims($customClaims);
+    // $jwt->setCustomClaims($customClaims);
 
-		// $jwt->createToken();
+    // $jwt->createToken();
 
-		// $token = $jwt->getToken();
+    // $token = $jwt->getToken();
 
-		// $cutOffPoint = strpos($token, '.');
+    // $cutOffPoint = strpos($token, '.');
 
-		// $brokenToken = substr( $token, $cutOffPoint + 1);
+    // $brokenToken = substr( $token, $cutOffPoint + 1);
 
-		// $validationResult = Ehjwt::validateToken($brokenToken);
+    // $validationResult = Ehjwt::validateToken($brokenToken);
 
-		// var_dump($this);
+    // var_dump($this);
 
-		// $this->assertEquals($validationResult, false);
-  //   }
+    // $this->assertEquals($validationResult, false);
+    //   }
 
-     public function testCreateTokenWithConstructorParameters() {
-		// var_dump('testCreateTokenWithConstructorParameters()');
-    	$secret = 'secret';
+    public function testCreateTokenWithConstructorParameters()
+    {
+        // var_dump('testCreateTokenWithConstructorParameters()');
+        $secret = 'secret';
 
-		$jwt = new Ehjwt($secret, null, 'mysql:host=127.0.0.1;dbname=ehjwts', 'roots', 'passwords', 'rustbeltrebellions.com', 'rustbeltrebellions.com');
+        $jwt = new Ehjwt($secret, null, 'mysql:host=127.0.0.1;dbname=ehjwts', 'roots', 'passwords', 'rustbeltrebellions.com', 'rustbeltrebellions.com');
 
-		$now = time();
-		$expires = time() + 30 * 60;
+        $now = time();
+        $expires = time() + 30 * 60;
 
-/*
-        iss: issuer, the website that issued the token
-        sub: subject, the id of the entity being granted the token 
-            (int has an unsigned, numeric limit of 4294967295)
-            (bigint has an unsigned, numeric limit of 18446744073709551615)
-        	(unix epoch as of "now" 1544897945)
-		aud: audience, the users of the token-- generally a url or string
-        exp: expires, the UTC UNIX epoch time stamp of when the token is no longer valid
-        nbf: not before, the UTC UNIX epoch time stamp of when the token becomes valid
-        iat: issued at, the UTC UNIX epoch time stamp of when the token was issued
-        jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation 
-*/
+        /*
+                iss: issuer, the website that issued the token
+                sub: subject, the id of the entity being granted the token
+                    (int has an unsigned, numeric limit of 4294967295)
+                    (bigint has an unsigned, numeric limit of 18446744073709551615)
+                    (unix epoch as of "now" 1544897945)
+                aud: audience, the users of the token-- generally a url or string
+                exp: expires, the UTC UNIX epoch time stamp of when the token is no longer valid
+                nbf: not before, the UTC UNIX epoch time stamp of when the token becomes valid
+                iat: issued at, the UTC UNIX epoch time stamp of when the token was issued
+                jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation
+        */
 
-		$standardClaims = array(
-	        'sub'=>'15448979450000000000',
-	        'exp'=>'1546353624',
-	        'nbf'=>'1546352624',
-	        'iat'=>'1546352624',
-	        'jti'=>'1234567890'
-		);
-		$jwt->setStandardClaims($standardClaims);
+        $standardClaims = array(
+            'sub'=>'15448979450000000000',
+            'exp'=>'1546353624',
+            'nbf'=>'1546352624',
+            'iat'=>'1546352624',
+            'jti'=>'1234567890'
+        );
+        $jwt->setStandardClaims($standardClaims);
 
-		$customClaims = array(
-			'age' => '39',
-			'sex' => 'male',
-			'location' => 'Davenport, Iowa'
-		);
+        $customClaims = array(
+            'age' => '39',
+            'sex' => 'male',
+            'location' => 'Davenport, Iowa'
+        );
 
-		$jwt->setCustomClaims($customClaims);
+        $jwt->setCustomClaims($customClaims);
 
-		$jwt->createToken();
+        $jwt->createToken();
 
-		$expectedAlgorithmChunk = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
-		$expectedPayloadChunk = 'eyJhZ2UiOiIzOSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9ucy5jb20iLCJleHAiOiIxNTQ2MzUzNjI0IiwiaWF0IjoiMTU0NjM1MjYyNCIsImlzcyI6InJ1c3RiZWx0cmViZWxsaW9ucy5jb20iLCJqdGkiOiIxMjM0NTY3ODkwIiwibG9jYXRpb24iOiJEYXZlbnBvcnQsIElvd2EiLCJuYmYiOiIxNTQ2MzUyNjI0Iiwic2V4IjoibWFsZSIsInN1YiI6IjE1NDQ4OTc5NDUwMDAwMDAwMDAwIn0';
-		$expectedCheckSumChunk = '4x7nDT8UmmZx1wkG7B4pj_GJ8AV06XF_pjEv1JoQViE';
+        $expectedAlgorithmChunk = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+        $expectedPayloadChunk = 'eyJhZ2UiOiIzOSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9ucy5jb20iLCJleHAiOiIxNTQ2MzUzNjI0IiwiaWF0IjoiMTU0NjM1MjYyNCIsImlzcyI6InJ1c3RiZWx0cmViZWxsaW9ucy5jb20iLCJqdGkiOiIxMjM0NTY3ODkwIiwibG9jYXRpb24iOiJEYXZlbnBvcnQsIElvd2EiLCJuYmYiOiIxNTQ2MzUyNjI0Iiwic2V4IjoibWFsZSIsInN1YiI6IjE1NDQ4OTc5NDUwMDAwMDAwMDAwIn0';
+        $expectedCheckSumChunk = '4x7nDT8UmmZx1wkG7B4pj_GJ8AV06XF_pjEv1JoQViE';
 
-		$jwtChunks = explode('.',$jwt->getToken());
+        $jwtChunks = explode('.', $jwt->getToken());
 
-		$jwtChunksCount = count($jwtChunks);
+        $jwtChunksCount = count($jwtChunks);
 
-		$actualAlgorithmChunk = $jwtChunks[0];
-		$actualPayloadChunk = $jwtChunks[1];
-		$actualChecksumChunk = $jwtChunks[2];
+        $actualAlgorithmChunk = $jwtChunks[0];
+        $actualPayloadChunk = $jwtChunks[1];
+        $actualChecksumChunk = $jwtChunks[2];
 
-		// Check that there are three parts to the JWT
-		$this->assertEquals(3, $jwtChunksCount);
+        // Check that there are three parts to the JWT
+        $this->assertEquals(3, $jwtChunksCount);
 
-		// Check that the algorithm chunk is predictably HS256
-		$this->assertEquals($expectedAlgorithmChunk, $actualAlgorithmChunk);
-		$this->assertEquals($expectedPayloadChunk, $actualPayloadChunk);
-		$this->assertEquals($expectedCheckSumChunk, $actualChecksumChunk);
+        // Check that the algorithm chunk is predictably HS256
+        $this->assertEquals($expectedAlgorithmChunk, $actualAlgorithmChunk);
+        $this->assertEquals($expectedPayloadChunk, $actualPayloadChunk);
+        $this->assertEquals($expectedCheckSumChunk, $actualChecksumChunk);
     }
 
-    public function testAlgorithmHeaderInvalidToken() {
-		// var_dump('testAlgorithmHeaderInvalidToken()');
+    public function testAlgorithmHeaderInvalidToken()
+    {
+        // var_dump('testAlgorithmHeaderInvalidToken()');
 
-		$jwt = new Ehjwt();
+        $jwt = new Ehjwt();
 
-		$brokenToken = 'zI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
+        $brokenToken = 'zI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
 
-		$validationResult = $jwt->validateToken($brokenToken);
+        $validationResult = $jwt->validateToken($brokenToken);
 
-		$this->assertEquals($validationResult, false);
+        $this->assertEquals($validationResult, false);
+    }
 
-	}
+    public function testPayloadInvalidToken()
+    {
+        // var_dump('testPayloadToken()');
 
-    public function testPayloadInvalidToken() {
-		// var_dump('testPayloadToken()');
+        $jwt = new Ehjwt();
 
-		$jwt = new Ehjwt();
+        $brokenToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
 
-		$brokenToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
+        $validationResult = $jwt->validateToken($brokenToken);
 
-		$validationResult = $jwt->validateToken($brokenToken);
+        $this->assertEquals($validationResult, false);
+    }
 
-		$this->assertEquals($validationResult, false);
+    public function testWrongAlgorithmHeaderInvalidToken()
+    {
 
-	}
+            // var_dump('testWrongAlgorithmHeaderInvalidToken()');
+        $secret = 'secret';
 
-	public function testWrongAlgorithmHeaderInvalidToken() {
+        $jwt = new Ehjwt($secret, null, 'mysql:host=localhost;dbname=ehjwt', 'root', 'password', 'rustbeltrebellion.com', 'rustbeltrebellion.com');
 
-			// var_dump('testWrongAlgorithmHeaderInvalidToken()');
-    	$secret = 'secret';
+        $now = time();
+        $expires = time() + 30 * 60;
 
-		$jwt = new Ehjwt($secret, null, 'mysql:host=localhost;dbname=ehjwt', 'root', 'password', 'rustbeltrebellion.com', 'rustbeltrebellion.com');
 
-		$now = time();
-		$expires = time() + 30 * 60;
 
+        $standardClaims = array(
+            'sub'=>'15448979450000000000',
+            'exp'=>'1546353624',
+            'nbf'=>'1546352624',
+            'iat'=>'1546352624',
+            'jti'=>'1234567890'
+        );
+        $jwt->setStandardClaims($standardClaims);
 
+        $customClaims = array(
+            'age' => '39',
+            'sex' => 'male',
+            'location' => 'Davenport, Iowa'
+        );
 
-		$standardClaims = array(
-	        'sub'=>'15448979450000000000',
-	        'exp'=>'1546353624',
-	        'nbf'=>'1546352624',
-	        'iat'=>'1546352624',
-	        'jti'=>'1234567890'
-		);
-		$jwt->setStandardClaims($standardClaims);
+        $jwt->setCustomClaims($customClaims);
 
-		$customClaims = array(
-			'age' => '39',
-			'sex' => 'male',
-			'location' => 'Davenport, Iowa'
-		);
+        $jwt->createToken();
 
-		$jwt->setCustomClaims($customClaims);
+        $token = $jwt->getToken();
 
-		$jwt->createToken();
+        $tokenParts = explode('.', $token);
 
-		$token = $jwt->getToken();
+        $this->assertEquals('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', $tokenParts[0]);
+    }
 
-		$tokenParts = explode('.', $token);
+    public function testBeforeNotBeforeInvalidToken()
+    {
+        //var_dump('testBeforeNotBeforeInvalidToken()');
 
-		$this->assertEquals('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', $tokenParts[0]);
-	}
+        $jwt = new Ehjwt('secret');
 
-	public function testBeforeNotBeforeInvalidToken() {
-		//var_dump('testBeforeNotBeforeInvalidToken()');
+        $brokenToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjIxNDc0ODM2NDAiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwibmJmIjoiMTk0NzQ4MzY0NyIsInNleCI6Im1hbGUiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.rGHGnyHMj3GODBB8XPa6chpl-IPFKdLfDJqlvih518Y';
 
-		$jwt = new Ehjwt('secret');
+        $jwt->loadToken($brokenToken);
 
-		$brokenToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjIxNDc0ODM2NDAiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwibmJmIjoiMTk0NzQ4MzY0NyIsInNleCI6Im1hbGUiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.rGHGnyHMj3GODBB8XPa6chpl-IPFKdLfDJqlvih518Y';
+        $validationResult = $jwt->validateToken($brokenToken);
 
-		$jwt->loadToken($brokenToken);
+        $this->assertEquals($validationResult, false);
+    }
 
-		$validationResult = $jwt->validateToken($brokenToken);
+    public function testExpiredInvalidToken()
+    {
+        // var_dump('testAlgorithmHeaderInvalidToken()');
 
-		$this->assertEquals($validationResult, false);
+        $jwt = new Ehjwt();
 
-	}
+        $brokenToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
 
-	public function testExpiredInvalidToken() {
-		// var_dump('testAlgorithmHeaderInvalidToken()');
+        $validationResult = $jwt->validateToken($brokenToken);
 
-		$jwt = new Ehjwt();
+        $this->assertEquals($validationResult, false);
+    }
 
-		$brokenToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImxvY2F0aW9uIjoiRGF2ZW5wb3J0LCBJb3dhIiwic2V4IjoibWFsZSIsImF1ZCI6InJ1c3RiZWx0cmViZWxsaW9uLmNvbSIsImV4cCI6IjE1NDYzNTM2MjQiLCJpYXQiOiIxNTQ2MzUyNjI0IiwianRpIjoiMTIzNDU2Nzg5MCIsIm5iZiI6IjE1NDYzNTI2MjQiLCJzdWIiOiIxNTQ0ODk3OTQ1MDAwMDAwMDAwMCJ9.g3hLhBGJLuc7c6JPvAAcPbHS3zP1TAz63rJeyzV5hlo';
+    public function testAddBannedRecord()
+    {
+        // var_dump('testBannedRecord()');
 
-		$validationResult = $jwt->validateToken($brokenToken);
+        $jwt = new Ehjwt();
 
-		$this->assertEquals($validationResult, false);
+        $now = time();
+        $expires = time() + 30 * 60;
 
-	}
+        $standardClaims = array(
+            'sub'=> '15448979460000000000',
+            'exp'=> $expires,
+            'nbf'=> $now,
+            'iat'=> $now,
+            'jti'=>'1234567890'
+        );
 
-	public function testAddBannedRecord() {
-		// var_dump('testBannedRecord()');
+        $jwt->setStandardClaims($standardClaims);
 
-		$jwt = new Ehjwt();
+        $customClaims = array(
+            'age' => '39',
+            'sex' => 'male',
+            'location' => 'Davenport, Iowa'
+        );
 
-		$now = time();
-		$expires = time() + 30 * 60;
+        $jwt->setCustomClaims($customClaims);
 
-		$standardClaims = array(
-	        'sub'=> '15448979460000000000',
-	        'exp'=> $expires,
-	        'nbf'=> $now,
-	        'iat'=> $now,
-	        'jti'=>'1234567890'
-		);
+        $jwt->createToken();
 
-		$jwt->setStandardClaims($standardClaims);
+        $token = $jwt->getToken();
 
-		$customClaims = array(
-			'age' => '39',
-			'sex' => 'male',
-			'location' => 'Davenport, Iowa'
-		);
+        $claims = $jwt->getClaims();
 
-		$jwt->setCustomClaims($customClaims);
+        $jwt->addTokenRevocationRecord(0, $claims['sub'], $claims['exp'] + 30);
 
-		$jwt->createToken();
+        $validationResult = $jwt->validateToken($token);
 
-		$token = $jwt->getToken();
+        // print_r('$validationResult: ' . $validationResult);
 
-		$claims = $jwt->getClaims();
+        $this->assertEquals(false, $validationResult);
+    }
 
-		$jwt->addTokenRevocationRecord(0, $claims['sub'], $claims['exp'] + 30);
+    public function testAddRevocationRecord()
+    {
+        // var_dump('testAddRevocationRecord()');
 
-		$validationResult = $jwt->validateToken($token);
+        $jwt = new Ehjwt();
 
-		// print_r('$validationResult: ' . $validationResult);
+        $now = time();
+        $expires = time() + 30 * 60;
 
-		$this->assertEquals(false, $validationResult);
-	}
+        $standardClaims = array(
+            'sub'=> '15448979450000000000',
+            'exp'=> $expires,
+            'nbf'=> $now,
+            'iat'=> $now,
+            'jti'=>'1234567890'
+        );
 
-	public function testAddRevocationRecord() {
-		// var_dump('testAddRevocationRecord()');
+        $jwt->setStandardClaims($standardClaims);
 
-		$jwt = new Ehjwt();
+        $customClaims = array(
+            'age' => '39',
+            'sex' => 'male',
+            'location' => 'Davenport, Iowa'
+        );
 
-		$now = time();
-		$expires = time() + 30 * 60;
+        $jwt->setCustomClaims($customClaims);
 
-		$standardClaims = array(
-	        'sub'=> '15448979450000000000',
-	        'exp'=> $expires,
-	        'nbf'=> $now,
-	        'iat'=> $now,
-	        'jti'=>'1234567890'
-		);
+        $jwt->createToken();
 
-		$jwt->setStandardClaims($standardClaims);
+        $token = $jwt->getToken();
 
-		$customClaims = array(
-			'age' => '39',
-			'sex' => 'male',
-			'location' => 'Davenport, Iowa'
-		);
+        $claims = $jwt->getClaims();
 
-		$jwt->setCustomClaims($customClaims);
+        $jwt->addTokenRevocationRecord($claims['jti'], $claims['sub'], $claims['exp'] + 30);
 
-		$jwt->createToken();
+        $validationResult = $jwt->validateToken($token);
 
-		$token = $jwt->getToken();
+        $this->assertEquals(false, $validationResult);
+    }
 
-		$claims = $jwt->getClaims();
+    public function testEnvironmentVarsLoad()
+    {
+        // var_dump('testEnvironmentVarsLoad()');
 
-		$jwt->addTokenRevocationRecord($claims['jti'], $claims['sub'], $claims['exp'] + 30);
+        //$dsn = addslashes(mysql:host=localhost);
+        $dsn = 'mysql:host=localhost';
 
-		$validationResult = $jwt->validateToken($token);
-
-		$this->assertEquals(false, $validationResult);
-	}
-
-	public function testEnvironmentVarsLoad() {
-		// var_dump('testEnvironmentVarsLoad()');
-
-    	//$dsn = addslashes(mysql:host=localhost);
-		$dsn = 'mysql:host=localhost';
-
-    	putenv('ESJWT_DSN=' . $dsn);
+        putenv('ESJWT_DSN=' . $dsn);
 
         putenv('ESJWT_DB_USER=root');
 
@@ -467,38 +476,39 @@ class ehjwtTest extends TestCase
         putenv('ESJWT_AUD=list255.com');
 
         $now = time();
-		$expires = time() + 30 * 60;
+        $expires = time() + 30 * 60;
 
-		$jwt = new Ehjwt(null, "NonExistentFile");
+        $jwt = new Ehjwt(null, "NonExistentFile");
 
-		$standardClaims = array(
-	        'sub'=>'15448979450000000000',
-	        'exp'=>"$expires",
-	        'nbf'=>"$now",
-	        'iat'=>"$now",
-	        'jti'=>'1234567890'
-		);
-		$jwt->setStandardClaims($standardClaims);
+        $standardClaims = array(
+            'sub'=>'15448979450000000000',
+            'exp'=>"$expires",
+            'nbf'=>"$now",
+            'iat'=>"$now",
+            'jti'=>'1234567890'
+        );
+        $jwt->setStandardClaims($standardClaims);
 
-		$claims = $jwt->getClaims();
+        $claims = $jwt->getClaims();
 
         $checkValues = [];
 
-	    $checkValues['iss'] = 'rustbeltrebellion.com';
-	    $checkValues['aud'] = 'list255.com';
+        $checkValues['iss'] = 'rustbeltrebellion.com';
+        $checkValues['aud'] = 'list255.com';
 
 
-	    $this->assertEquals($claims['iss'], $checkValues['iss']);
-	    $this->assertEquals($claims['aud'], $checkValues['aud']);
+        $this->assertEquals($claims['iss'], $checkValues['iss']);
+        $this->assertEquals($claims['aud'], $checkValues['aud']);
     }
 
-	public function testEnvironmentVarsStrictLoad() {
-		// var_dump('testEnvironmentVarsStrictLoad()');
+    public function testEnvironmentVarsStrictLoad()
+    {
+        // var_dump('testEnvironmentVarsStrictLoad()');
 
-    	//$dsn = addslashes(mysql:host=localhost);
-		$dsn = 'mysql:host=localhost';
+        //$dsn = addslashes(mysql:host=localhost);
+        $dsn = 'mysql:host=localhost';
 
-    	putenv('ESJWT_DSN=' . $dsn);
+        putenv('ESJWT_DSN=' . $dsn);
 
         putenv('ESJWT_DB_USER=root');
 
@@ -513,32 +523,32 @@ class ehjwtTest extends TestCase
         putenv('ESJWT_USE_ENV_VARS=true');
 
         $now = time();
-		$expires = time() + 30 * 60;
+        $expires = time() + 30 * 60;
 
-		$jwt = new Ehjwt(null, "NonExistentFile");
+        $jwt = new Ehjwt(null, "NonExistentFile");
 
-		$standardClaims = array(
-	        'sub'=>'15448979450000000000',
-	        'exp'=>"$expires",
-	        'nbf'=>"$now",
-	        'iat'=>"$now",
-	        'jti'=>'1234567890'
-		);
-		$jwt->setStandardClaims($standardClaims);
+        $standardClaims = array(
+            'sub'=>'15448979450000000000',
+            'exp'=>"$expires",
+            'nbf'=>"$now",
+            'iat'=>"$now",
+            'jti'=>'1234567890'
+        );
+        $jwt->setStandardClaims($standardClaims);
 
-		$claims = $jwt->getClaims();
+        $claims = $jwt->getClaims();
 
         $checkValues = [];
 
-	    $checkValues['iss'] = 'rustbeltrebellion.com';
-	    $checkValues['aud'] = 'list255.com';
+        $checkValues['iss'] = 'rustbeltrebellion.com';
+        $checkValues['aud'] = 'list255.com';
 
 
-	    $this->assertEquals($claims['iss'], $checkValues['iss']);
-	    $this->assertEquals($claims['aud'], $checkValues['aud']);
+        $this->assertEquals($claims['iss'], $checkValues['iss']);
+        $this->assertEquals($claims['aud'], $checkValues['aud']);
 
 
-    	putenv('ESJWT_DSN');
+        putenv('ESJWT_DSN');
 
         putenv('ESJWT_DB_USER');
 
