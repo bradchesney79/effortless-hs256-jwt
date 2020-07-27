@@ -12,6 +12,10 @@ use PDO;
 
 class Ehjwt
 {
+
+
+    // properties
+
     /*
     iss: issuer, the website that issued the token
     sub: subject, the id of the entity being granted the token
@@ -122,6 +126,8 @@ class Ehjwt
     private const jwtHeader = array( 'alg' => 'HS256', 'typ' => 'JWT');
 
     private string $enforceUsingEnvVars = '';
+
+    // methods
 
     private function checkEnforceUsingEnvVars() {
         if (getenv('ESJWT_USE_ENV_VARS') == 'true') {
@@ -345,13 +351,65 @@ class Ehjwt
         return true;
     }
 
-    public function createToken()
-    {
-        // header as immutable constant
+    public function addOrUpdateAudProperty(string $aud) {
+        if (strlen($aud) > 0) {
+            $this->aud = $aud;
+            return true;
+        }
+        return false;
+    }
 
-        // create body
+    public function addOrUpdateExpProperty(string $exp) {
+        // ToDo: this is an expiration date, do better here Chesney...
+        if (strlen($exp) > 0) {
+            $this->exp = $exp;
+            return true;
+        }
+        return false;
+    }
 
-        $standardClaims = [
+    public function addOrUpdateIatProperty(string $iat) {
+        if (strlen($iat) > 0) {
+            $this->iat = $iat;
+            return true;
+        }
+        return false;
+    }
+
+    private function addOrUpdateIssProperty(string $iss) {
+        if (strlen($iss) > 0) {
+            $this->iss = $iss;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateJtiProperty(string $jti) {
+        if (strlen($jti) > 0) {
+            $this->jti = $jti;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateNbfProperty(string $nbf) {
+        if (strlen($nbf) > 0) {
+            $this->nbf = $nbf;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateSubProperty(string $sub) {
+        if (strlen($sub) > 0) {
+            $this->sub = $sub;
+            return true;
+        }
+        return false;
+    }
+
+    private function setStandardClaims() {
+        $this->standardClaims = [
             'aud' => $this->aud,
             'exp' => $this->exp,
             'iat' => $this->iat,
@@ -360,30 +418,61 @@ class Ehjwt
             'nbf' => $this->nbf,
             'sub' => $this->sub
         ];
+        return true;
+    }
 
+    public function addOrUpdateCustomClaim(string $key, $value) {
+        // listen, your users shouldn't set your token keys-- you should
+        // no validation, be smart
+        // ToDo: maybe add validation so someone doesn't shoot themselves in the foot
+        if(strlen($key) > 0) {
+            $this->customClaims[$key] = $value;
+            return true;
+        }
+        return false;
+    }
+
+    private function setTokenClaims() {
         ksort($this->customClaims);
 
         foreach ($this->customClaims as $key => $value) {
             if (strlen($value) > 0) {
-                $tokenClaims[$key] = $value;
+                $this->tokenClaims[$key] = $value;
             }
         };
 
         // standard claims set after to make custom claims the priority value, layered security strategy
 
-        foreach ($standardClaims as $key => $value) {
+        foreach ($this->standardClaims as $key => $value) {
             if (strlen($value)) {
-                $tokenClaims[$key] = $value;
+                $this->tokenClaims[$key] = $value;
             }
         }
 
-        ksort($tokenClaims);
+        ksort($this->tokenClaims);
+
+        return true;
+    }
+
+    private function jsonEncodeHeader() {}
+
+    private function jsonEncodeBody() {}
+
+    private function createSignature() {}
+
+    private function createToken() {
+        // header as immutable constant
+        // create body
+
+        $this->setStandardClaims();
+
+        $this->setTokenClaims();
 
         // convert from arrays to JSON objects
 
         $jsonHeader = json_encode(self::jwtHeader, JSON_FORCE_OBJECT);
 
-        $jsonClaims = json_encode($tokenClaims, JSON_FORCE_OBJECT);
+        $jsonClaims = json_encode($this->tokenClaims, JSON_FORCE_OBJECT);
 
         // encode the header and claims to base64url string
         $base64UrlHeader = $this->base64UrlEncode($jsonHeader);
@@ -401,7 +490,7 @@ class Ehjwt
 
         $this->token = implode('.', $tokenParts);
 
-        return $this->token;
+        return true;
     }
 
     public function getToken()
@@ -409,6 +498,7 @@ class Ehjwt
         $this->createToken();
         return $this->token;
     }
+
     public function validateToken(string $tokenString)
     {
         $tokenParts = explode('.', $tokenString);
@@ -663,25 +753,26 @@ class Ehjwt
 
     public function clearClaims()
     {
-        $this->iss = null;
-        $this->sub = null;
-        $this->aud = null;
-        $this->exp = null;
-        $this->nbf = null;
-        $this->iat = null;
-        $this->jti = null;
+        $this->iss = '';
+        $this->sub = '';
+        $this->aud = '';
+        $this->exp = '';
+        $this->nbf = '';
+        $this->iat = '';
+        $this->jti = '';
 
         $this->customClaims = [];
     }
 
-    public function setStandardClaims(array $standardClaims)
+    // ToDo: find a way to meld this into the new claim thingey
+    public function OLDsetStandardClaims(array $standardClaims)
     {
         foreach ($standardClaims as $claimKey => $value) {
             if (mb_check_encoding($value, 'UTF-8')) {
                 if (in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true)) {
                     $this->{$claimKey} = $value;
                 } else {
-                    $this->{$claimKey} = null;
+                    $this->{$claimKey} = '';
                 }
             } else {
                 error_log('Ehjwt standard claim non-UTF-8 input string encoding error.');
@@ -819,6 +910,7 @@ class Ehjwt
 class EhjwtWriteRevocationRecordFailException extends \Exception
 {
 };
+
 class EhjwtDeleteRevocationRecordFailException extends \Exception
 {
 };
