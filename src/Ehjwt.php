@@ -30,43 +30,50 @@ class Ehjwt
      *
      * @var string
      */
-    private string $iss = "";
+    private string $iss = '';
     /**
      * Subject
      *
      * @var string
      */
-    private string $sub = "";
+    private string $sub = '';
     /**
      * Audience
      *
      * @var string
      */
-    private string $aud = "";
+    private string $aud = '';
     /**
      * Expiration Time
      *
      * @var string
      */
-    private string $exp = "";
+    private string $exp = '';
     /**
      * Not Before
      *
      * @var string
      */
-    private string $nbf = "";
+    private string $nbf = '';
     /**
      * Issued At
      *
      * @var string
      */
-    private string $iat = "";
+    private string $iat = '';
     /**
      * JWT ID
      *
      * @var string
      */
-    private string $jti = "";
+    private string $jti = '';
+
+    /**
+     * Standard Claims
+     *
+     * @var array
+     */
+    private array $standardClaims = array();
     /**
      * Custom Claims
      *
@@ -75,21 +82,28 @@ class Ehjwt
     private array $customClaims = array();
 
     /**
-     * @var string
+     * Token Claims
+     *
+     * @var array
      */
-    private $jwtSecret = "";
+    private array $tokenClaims = array();
 
     /**
      * @var string
      */
-    private $token = "";
+    private $jwtSecret = '';
 
     /**
-     * The config file path.
+     * @var string
+     */
+    private string $token = '';
+
+    /**
+     * The config file with path.
      *
      * @var string
      */
-    protected $file;
+    protected string $configFile;
 
     /**
      * The config data.
@@ -105,59 +119,117 @@ class Ehjwt
      */
     public object $error;
 
-    private function enforceUsingEnvVars() {
-        $useEnvVars = getenv('ESJWT_USE_ENV_VARS');
-        if ($useEnvVars == "true") {
+    private const jwtHeader = array( 'alg' => 'HS256', 'typ' => 'JWT');
+
+    private string $enforceUsingEnvVars = '';
+
+    private function checkEnforceUsingEnvVars() {
+        if (getenv('ESJWT_USE_ENV_VARS') == 'true') {
+            $this->enforceUsingEnvVars = true;
             return true;
         }
+
+        $this->enforceUsingEnvVars = false;
         return false;
     }
+    
+    private function retrieveEnvValue(string $envKey) {
+        $envValue = getEnv($envKey);
+        if (!$envValue) {
+            return '';
+        }
+        return $envValue;
+    }
 
-    public function __construct(string $secret = "", string $file = "", string $dsn = "", string $dbUser = "", string $dbPassword = "", string $iss = "", string $aud = "") {
+    private function setDsnFromEnvVar() {
+        $dsn = $this->retrieveEnvValue('ESJWT_DSN');
+        if (strlen($dsn) > 0) {
+            $this->dsn = $dsn;
+        }
+        return true;
+    }
 
+    private function setDbUserFromEnvVar()
+    {
+        $dbUser = $this->retrieveEnvValue('ESJWT_DB_USER');
+        if (strlen($dbUser) > 0) {
+            $this->dbUser = $dbUser;
+        }
+        return true;
+    }
 
+    private function setDbPasswordFromEnvVar() {
+        $dbPassword = $this->retrieveEnvValue('ESJWT_DB_PASS');
+        if (strlen($dbPassword) >0) {
+            $this->dbPassword = $dbPassword;
+        }
+        return true;
+    }
+
+    private function setJwtSecretFromEnvVar() {
+        $jwtSecret = $this->retrieveEnvValue('ESJWT_JWT_SECRET');
+        if (strlen($jwtSecret) >0) {
+            $this->jwtSecret = $jwtSecret;
+        }
+        return true;
+    }
+
+    private function setIssFromEnvVar() {
+        $iss = $this->retrieveEnvValue('ESJWT_ISS');
+        if (strlen($iss) >0) {
+            $this->iss = $iss;
+        }
+        return true;
+    }
+
+    private function setAudFromEnvVar() {
+        $aud = $this->retrieveEnvValue('ESJWT_AUD');
+        if (strlen($aud) >0) {
+            $this->aud = $aud;
+        }
+        return true;
+    }
+
+    private function setPropertiesFromEnvVars() {
+        $this->setDsnFromEnvVar();
+        $this->setDbUserFromEnvVar();
+        $this->setJwtSecretFromEnvVar();
+        $this->setIssFromEnvVar();
+        $this->setAudFromEnvVar();
+        return true;
+    }
+
+    private function setConfigFileProperty(string $configFileWithPath) {
+        if (strlen($configFileWithPath) < 1) {
+            $this->file = __DIR__.'/../config/ehjwt-conf.php';
+        }
+        else {
+            $this->file = $configFileWithPath;
+        }
+    }
+
+    private function loadConfigFile() {
+        if (file_exists($this->configFile)) {
+            $this->config = require $this->configFile;
+        }
+    }
+
+    public function __construct(string $secret = '', string $file = '', string $dsn = '', string $dbUser = '', string $dbPassword = '', string $iss = '', string $aud = '') {
+
+        $this->checkEnforceUsingEnvVars();
 
         // var_dump('==========================================================');
 
-        // load configuration from environment variables
-
-        $dsnEnv = getenv('ESJWT_DSN');
-        $dbUserEnv = getenv('ESJWT_DB_USER');
-        $dbPasswordEnv = getenv('ESJWT_DB_PASS');
-        $jwtSecretEnv = getenv('ESJWT_JWT_SECRET');
-        $issEnv = getenv('ESJWT_ISS');
-        $audEnv = getenv('ESJWT_AUD');
-
-        if ($this->enforceUsingEnvVars()) {
-
-            $this->config['dsn'] = $dsnEnv;
-
-            $this->config['dbUser'] = $dbUserEnv;
-
-            $this->config['dbPassword'] = $dbPasswordEnv;
-
-            $this->jwtSecret = $jwtSecretEnv;
-
-            $this->iss = $issEnv;
-
-            $this->aud = $audEnv;
-
+        if ($this->enforceUsingEnvVars) {
+            $this->setPropertiesFromEnvVars();
             return true;
         }
         else {
-            if (strlen($file) < 1) {
-                $this->file = __DIR__.'/../config/ehjwt-conf.php';
-            }
-            else {
-                $this->file = $file;
-            }
 
-            // check for config file existing before actual load
-            if (file_exists($this->file)) {
-                $config = require $this->file;
-            }
+            $this->setConfigFileProperty($file);
 
-            unset($file);
+            $this->loadConfigFile();
+
 
             $this->config['dsn'] = $dsn ?? $config['dsn'] ?? $dsnEnv;
 
@@ -169,23 +241,20 @@ class Ehjwt
 
             $this->iss = $iss ?? $config['iss'] ?? $issEnv;
 
-            $this->aud = $iss ?? $config['aud'] ?? $audEnv;
+            $this->aud = $aud ?? $config['aud'] ?? $audEnv;
         }
 
-        unset($dsnEnv, $dbUserEnv, $dbPasswordEnv, $jwtSecretEnv, $issEnv, $audEnv, $useEnvVars);
+        return true;
 
     }
 
     public function createToken()
     {
-        // create header
-        $header = [
-            'alg' => 'HS256',
-            'typ' => 'JWT'
-        ];
+        // header as immutable constant
+
         // create body
 
-        $standardClaims  = [
+        $standardClaims = [
             'aud' => $this->aud,
             'exp' => $this->exp,
             'iat' => $this->iat,
@@ -198,13 +267,15 @@ class Ehjwt
         ksort($this->customClaims);
 
         foreach ($this->customClaims as $key => $value) {
-            if (null !== $value) {
+            if (strlen($value) > 0) {
                 $tokenClaims[$key] = $value;
             }
         };
 
+        // standard claims set after to make custom claims the priority value, layered security strategy
+
         foreach ($standardClaims as $key => $value) {
-            if (null !== $value) {
+            if (strlen($value)) {
                 $tokenClaims[$key] = $value;
             }
         }
@@ -213,7 +284,7 @@ class Ehjwt
 
         // convert from arrays to JSON objects
 
-        $jsonHeader = json_encode($header, JSON_FORCE_OBJECT);
+        $jsonHeader = json_encode(self::jwtHeader, JSON_FORCE_OBJECT);
 
         $jsonClaims = json_encode($tokenClaims, JSON_FORCE_OBJECT);
 
