@@ -160,7 +160,7 @@ class Ehjwt
 
     private function setDbPasswordFromEnvVar() {
         $dbPassword = $this->retrieveEnvValue('ESJWT_DB_PASS');
-        if (strlen($dbPassword) >0) {
+        if (strlen($dbPassword) > 0) {
             $this->dbPassword = $dbPassword;
         }
         return true;
@@ -168,7 +168,7 @@ class Ehjwt
 
     private function setJwtSecretFromEnvVar() {
         $jwtSecret = $this->retrieveEnvValue('ESJWT_JWT_SECRET');
-        if (strlen($jwtSecret) >0) {
+        if (strlen($jwtSecret) > 0) {
             $this->jwtSecret = $jwtSecret;
         }
         return true;
@@ -176,7 +176,7 @@ class Ehjwt
 
     private function setIssFromEnvVar() {
         $iss = $this->retrieveEnvValue('ESJWT_ISS');
-        if (strlen($iss) >0) {
+        if (strlen($iss) > 0) {
             $this->iss = $iss;
         }
         return true;
@@ -184,7 +184,7 @@ class Ehjwt
 
     private function setAudFromEnvVar() {
         $aud = $this->retrieveEnvValue('ESJWT_AUD');
-        if (strlen($aud) >0) {
+        if (strlen($aud) > 0) {
             $this->aud = $aud;
         }
         return true;
@@ -193,6 +193,7 @@ class Ehjwt
     private function setPropertiesFromEnvVars() {
         $this->setDsnFromEnvVar();
         $this->setDbUserFromEnvVar();
+        $this->setDbPasswordFromEnvVar();
         $this->setJwtSecretFromEnvVar();
         $this->setIssFromEnvVar();
         $this->setAudFromEnvVar();
@@ -214,14 +215,127 @@ class Ehjwt
         }
     }
 
+    private function setDsnFromConfig() {
+        $dsn = $this->config['dsn'];
+        if (strlen($dsn) > 0) {
+            $this->dsn = $dsn;
+        }
+        return true;
+    }
+
+    private function setDbUserFromConfig(){
+        $dbUser = $this->config['dbUser'];
+        if (strlen($dbUser) > 0) {
+            $this->dbUser = $dbUser;
+        }
+        return true;
+    }
+
+    private function setDbPasswordFromConfig() {
+        $dbPassword = $this->config['dbPassword'];
+        if (strlen($dbPassword) > 0) {
+            $this->dbPassword = $dbPassword;
+        }
+        return true;
+    }
+
+    private function setJwtSecretFromConfig() {
+        $jwtSecret = $this->config['jwtSecret'];
+        if (strlen($jwtSecret) > 0) {
+            $this->jwtSecret = $jwtSecret;
+        }
+        return true;
+    }
+
+    private function setIssFromConfig() {
+        $iss = $this->config['iss'];
+        if (strlen($iss) > 0) {
+            $this->iss = $iss;
+        }
+        return true;
+    }
+
+    private function setAudFromConfig() {
+        $aud = $this->config['aud'];
+        if (strlen($aud) > 0) {
+            $this->aud = $aud;
+        }
+        return true;
+    }
+
+    private function setPropertiesFromConfigFile() {
+        $this->setDsnFromConfig();
+        $this->setDbUserFromConfig();
+        $this->setDbPasswordFromConfig();
+        $this->setJwtSecretFromConfig();
+        $this->setIssFromConfig();
+        $this->setAudFromConfig();
+        return true;
+    }
+
+    private function setDsnFromArguments(string $dsn) {
+        if (strlen($dsn) > 0) {
+            $this->dsn = $dsn;
+        }
+        return true;
+    }
+
+    private function setDbUserFromArguments(string $dbUser) {
+        if (strlen($dbUser) > 0) {
+            $this->dbUser = $dbUser;
+        }
+        return true;
+    }
+
+    private function setDbPasswordFromArguments(string $dbPassword) {
+        if (strlen($dbPassword) > 0) {
+            $this->dbPassword = $dbPassword;
+        }
+        return true;
+    }
+
+    private function setJwtSecretFromArguments(string $jwtSecret) {
+        if (strlen($jwtSecret) > 0) {
+            $this->jwtSecret = $jwtSecret;
+        }
+        return true;
+    }
+
+    private function setIssFromArguments(string $iss) {
+        if (strlen($iss) > 0) {
+            $this->iss = $iss;
+        }
+        return true;
+    }
+
+    private function setAudFromArguments(string $aud) {
+        if (strlen($aud) > 0) {
+            $this->aud = $aud;
+        }
+        return true;
+    }
+
+
+
+    private function setPropertiesFromArguments(string $secret = '', string $dsn = '', string $dbUser = '', string $dbPassword = '', string $iss = '', string $aud = '') {
+        $this->setDsnFromArguments($dsn);
+        $this->setDbUserFromArguments($dbUser);
+        $this->setDbPasswordFromArguments($dbPassword);
+        $this->setJwtSecretFromArguments($secret);
+        $this->setIssFromArguments($iss);
+        $this->setAudFromArguments($aud);
+        return true;
+    }
+
     public function __construct(string $secret = '', string $file = '', string $dsn = '', string $dbUser = '', string $dbPassword = '', string $iss = '', string $aud = '') {
+
+        $this->setPropertiesFromEnvVars();
 
         $this->checkEnforceUsingEnvVars();
 
         // var_dump('==========================================================');
 
         if ($this->enforceUsingEnvVars) {
-            $this->setPropertiesFromEnvVars();
             return true;
         }
         else {
@@ -230,18 +344,10 @@ class Ehjwt
 
             $this->loadConfigFile();
 
+            $this->setPropertiesFromConfigFile();
 
-            $this->config['dsn'] = $dsn ?? $config['dsn'] ?? $dsnEnv;
+            $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
 
-            $this->config['dbUser'] = $dbUser ?? $config['dbUser'] ?? $dbUserEnv;
-
-            $this->config['dbPassword'] = $dbPassword ?? $config['dbPassword'] ?? $dbPasswordEnv;
-
-            $this->jwtSecret = $secret ?? $config['jwtSecret'] ?? $jwtSecretEnv;
-
-            $this->iss = $iss ?? $config['iss'] ?? $issEnv;
-
-            $this->aud = $aud ?? $config['aud'] ?? $audEnv;
         }
 
         return true;
