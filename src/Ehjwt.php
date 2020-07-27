@@ -315,8 +315,6 @@ class Ehjwt
         return true;
     }
 
-
-
     private function setPropertiesFromArguments(string $secret = '', string $dsn = '', string $dbUser = '', string $dbPassword = '', string $iss = '', string $aud = '') {
         $this->setDsnFromArguments($dsn);
         $this->setDbUserFromArguments($dbUser);
@@ -339,19 +337,12 @@ class Ehjwt
             return true;
         }
         else {
-
             $this->setConfigFileProperty($file);
-
             $this->loadConfigFile();
-
             $this->setPropertiesFromConfigFile();
-
             $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
-
         }
-
         return true;
-
     }
 
     public function createToken()
@@ -428,10 +419,8 @@ class Ehjwt
             return false;
         }
 
-
         //var_dump('header');
         $unpackedTokenHeader = json_decode($this->base64UrlDecode($tokenParts[0]), true);
-
 
         switch (json_last_error()) {
             case JSON_ERROR_NONE:
@@ -613,7 +602,6 @@ class Ehjwt
             // 'signature invalid, potential tampering
             return false;
         }
-
 
         // the token checks out!
         return true;
@@ -797,7 +785,6 @@ class Ehjwt
             $this->{$claimKey} = null;
         }
     }
-
 
     public function deleteCustomClaims(string $customClaimNamesCommaSeparated)
     {
