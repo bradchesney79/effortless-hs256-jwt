@@ -27,19 +27,19 @@ By specifying these things separately, this package supports a wider range of pe
 
 return [
 	
-	'dsn' => null,
+	'dsn' => "",
 
-	'user' => null,
+	'user' => "",
 
-	'password' => null,
+	'password' => "",
 
-	'jwtSecret' => null,
+	'jwtSecret' => "",
 
 	// the issuer
-	'iss' => null,
+	'iss' => "",
 	
 	// the audience
-	'aud' => null
+	'aud' => ""
 
 ];
 
