@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: bchesney
- * Date: 11/7/18
- * Time: 3:33 PM
- */
-
 namespace bradchesney79;
 
 use PDO;
@@ -125,7 +118,9 @@ class Ehjwt
 
     private const jwtHeader = array( 'alg' => 'HS256', 'typ' => 'JWT');
 
-    private string $enforceUsingEnvVars = '';
+    private string $enforceUsingEnvVars = 'false';
+
+    private string $enforceDisallowArguments = 'false';
 
     // methods
 
@@ -136,6 +131,19 @@ class Ehjwt
         }
 
         $this->enforceUsingEnvVars = false;
+        return false;
+    }
+
+    private function checkDisallowArguments() {
+        if (getenv('ESJWT_DISALLOW_ARGUMENTS') == 'true') {
+            $this->enforceDisallowArguments = 'true';
+            return true;
+        }
+        if ($this->config['disallowArguments'] == 'true') {
+            $this->enforceDisallowArguments = 'true';
+            return true;
+        }
+        $this->enforceDisallowArguments = 'false';
         return false;
     }
     
@@ -269,6 +277,15 @@ class Ehjwt
         return true;
     }
 
+    private function setDisallowArgumentsFromConfig() {
+        $disallowArguments = $this->config['disallowArguments'];
+        if (strlen($disallowArguments) > 0 && $disallowArguments == 'true') {
+            $this->enforceDisallowArguments = true;
+            return true;
+        }
+        return false;
+    }
+
     private function setPropertiesFromConfigFile() {
         $this->setDsnFromConfig();
         $this->setDbUserFromConfig();
@@ -276,6 +293,7 @@ class Ehjwt
         $this->setJwtSecretFromConfig();
         $this->setIssFromConfig();
         $this->setAudFromConfig();
+        $this->setDisallowArgumentsFromConfig();
         return true;
     }
 
@@ -346,7 +364,9 @@ class Ehjwt
             $this->setConfigFileProperty($file);
             $this->loadConfigFile();
             $this->setPropertiesFromConfigFile();
-            $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
+            if ($this->checkDisallowArguments()) {
+                $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
+            }
         }
         return true;
     }
@@ -422,7 +442,7 @@ class Ehjwt
     }
 
     public function addOrUpdateCustomClaim(string $key, $value) {
-        // listen, your users shouldn't set your token keys-- you should
+        // listen, your users shouldn't set your token keys-- you should set the token keys
         // no validation, be smart
         // ToDo: maybe add validation so someone doesn't shoot themselves in the foot
         if(strlen($key) > 0) {
@@ -454,11 +474,20 @@ class Ehjwt
         return true;
     }
 
-    private function jsonEncodeHeader() {}
+    private function jsonEncodeHeader() {
+        return json_encode(self::jwtHeader, JSON_FORCE_OBJECT);
+    }
+
+    private function jsonEncodeClaims() {
+        return json_encode($this->tokenClaims, JSON_FORCE_OBJECT);
+    }
 
     private function jsonEncodeBody() {}
 
-    private function createSignature() {}
+    private function createSignature($base64UrlHeader, $base64UrlClaims) {
+        $jsonSignature = $this->makeHmacHash($base64UrlHeader, $base64UrlClaims);
+        return $this->base64UrlEncode($jsonSignature);
+    }
 
     private function createToken() {
         // header as immutable constant
@@ -470,9 +499,9 @@ class Ehjwt
 
         // convert from arrays to JSON objects
 
-        $jsonHeader = json_encode(self::jwtHeader, JSON_FORCE_OBJECT);
+        $jsonHeader = $this->jsonEncodeHeader();
 
-        $jsonClaims = json_encode($this->tokenClaims, JSON_FORCE_OBJECT);
+        $jsonClaims = $this->jsonEncodeClaims();
 
         // encode the header and claims to base64url string
         $base64UrlHeader = $this->base64UrlEncode($jsonHeader);
@@ -480,8 +509,7 @@ class Ehjwt
         $base64UrlClaims = $this->base64UrlEncode($jsonClaims);
 
         // create signature
-
-        $jsonSignature = $this->makeHmacHash($base64UrlHeader, $base64UrlClaims);
+        $jsonSignature = $this->createSignature($base64UrlHeader, $base64UrlClaims);
 
         // encode signature to base64url string
         $base64UrlSignature = $this->base64UrlEncode($jsonSignature);
@@ -498,6 +526,8 @@ class Ehjwt
         $this->createToken();
         return $this->token;
     }
+
+
 
     public function validateToken(string $tokenString)
     {
@@ -551,6 +581,7 @@ class Ehjwt
         if ($error !== '') {
             //var_dump('undecodable header');
             // 'Header does not decode'
+            throw new TokenValidationException();
             return false;
         }
 
@@ -835,7 +866,7 @@ class Ehjwt
     {
         // var_dump('writeRecordToRevocationTable()');
         try {
-            $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+            $dbh = $this->makeRevocationTableDatabaseConnection();
             
             $stmt = $dbh->prepare("INSERT INTO revoked_ehjwt (jti, sub, exp) VALUES (?, ?, ?)");
             
@@ -853,10 +884,14 @@ class Ehjwt
         }
     }
 
+    private function makeRevocationTableDatabaseConnection() {
+        return new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+    }
+
     private function deleteRecordFromRevocationTable(string $recordId)
     {
         try {
-            $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+            $dbh = $this->makeRevocationTableDatabaseConnection();
             
             $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE id = ?");
             
@@ -909,8 +944,21 @@ class Ehjwt
 // DB Exceptions
 class EhjwtWriteRevocationRecordFailException extends \Exception
 {
-};
+    public function __construct($message, $code = 0, Exception $previous = null) {
+        // some code
+    }
+}
 
 class EhjwtDeleteRevocationRecordFailException extends \Exception
 {
-};
+    public function __construct($message, $code = 0, Exception $previous = null) {
+        // some code
+    }
+}
+
+class TokenValidationException extends \Exception
+{
+    public function __construct($message, $code = 0, Exception $previous = null) {
+        // some code
+    }
+}
