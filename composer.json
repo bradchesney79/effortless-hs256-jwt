@@ -1,8 +1,8 @@
 {
     "name": "bradchesney79/effortless-hs256-jwt",
-    "description": "A tool to create the skeleton of an app from a detailed source object.",
+    "description": "An opinionated library to facilitate JWT management in part by disallowing undesirable possibilities",
     "type": "project",
-        "authors": [
+    "authors": [
         {
             "name": "BradChesney79",
             "email": "bradchesney79@gmail.com",
@@ -10,6 +10,9 @@
         }
     ],
     "require": {
+        "php": "^7.4",
+        "ext-json": "*",
+        "ext-pdo": "*"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.14",

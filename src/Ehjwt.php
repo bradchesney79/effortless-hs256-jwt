@@ -1,17 +1,14 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: bchesney
- * Date: 11/7/18
- * Time: 3:33 PM
- */
-
 namespace bradchesney79;
 
 use PDO;
 
 class Ehjwt
 {
+
+
+    // properties
+
     /*
     iss: issuer, the website that issued the token
     sub: subject, the id of the entity being granted the token
@@ -30,173 +27,409 @@ class Ehjwt
      *
      * @var string
      */
-    private $iss = null;
+    private string $iss = '';
     /**
      * Subject
      *
      * @var string
      */
-    private $sub = null;
+    private string $sub = '';
     /**
      * Audience
      *
      * @var string
      */
-    private $aud = null;
+    private string $aud = '';
     /**
      * Expiration Time
      *
      * @var string
      */
-    private $exp = null;
+    private string $exp = '';
     /**
      * Not Before
      *
      * @var string
      */
-    private $nbf = null;
+    private string $nbf = '';
     /**
      * Issued At
      *
      * @var string
      */
-    private $iat = null;
+    private string $iat = '';
     /**
      * JWT ID
      *
      * @var string
      */
-    private $jti = null;
+    private string $jti = '';
 
     /**
+     * Standard Claims
+     *
      * @var array
      */
-    private $customClaims = null;
+    private array $standardClaims = array();
+    /**
+     * Custom Claims
+     *
+     * @var array
+     */
+    private array $customClaims = array();
+
+    /**
+     * Token Claims
+     *
+     * @var array
+     */
+    private array $tokenClaims = array();
 
     /**
      * @var string
      */
-    private $jwtSecret = null;
+    private $jwtSecret = '';
 
     /**
      * @var string
      */
-    private $token = null;
+    private string $token = '';
 
     /**
-     * The config file path.
+     * The config file with path.
      *
      * @var string
      */
-    protected $file;
+    protected string $configFile;
 
     /**
      * The config data.
      *
-     * @var stdClass
+     * @var array
      */
-    protected $config = [];
+    protected array $config = [];
 
     /**
+     * Error Object
      *
      * @var object
      */
-    public $error;
+    public object $error;
 
-    private function enforceUsingEnvVars() {
-        $useEnvVars = getenv('ESJWT_USE_ENV_VARS');
-        if ($useEnvVars == "true") {
+    private const jwtHeader = array( 'alg' => 'HS256', 'typ' => 'JWT');
+
+    private string $enforceUsingEnvVars = 'false';
+
+    private string $enforceDisallowArguments = 'false';
+
+    // methods
+
+    private function checkEnforceUsingEnvVars() {
+        if (getenv('ESJWT_USE_ENV_VARS') == 'true') {
+            $this->enforceUsingEnvVars = true;
+            return true;
+        }
+
+        $this->enforceUsingEnvVars = false;
+        return false;
+    }
+
+    private function checkDisallowArguments() {
+        if (getenv('ESJWT_DISALLOW_ARGUMENTS') == 'true') {
+            $this->enforceDisallowArguments = 'true';
+            return true;
+        }
+        if ($this->config['disallowArguments'] == 'true') {
+            $this->enforceDisallowArguments = 'true';
+            return true;
+        }
+        $this->enforceDisallowArguments = 'false';
+        return false;
+    }
+    
+    private function retrieveEnvValue(string $envKey) {
+        $envValue = getEnv($envKey);
+        if (!$envValue) {
+            return '';
+        }
+        return $envValue;
+    }
+
+    private function setDsnFromEnvVar() {
+        $dsn = $this->retrieveEnvValue('ESJWT_DSN');
+        if (strlen($dsn) > 0) {
+            $this->dsn = $dsn;
+        }
+        return true;
+    }
+
+    private function setDbUserFromEnvVar()
+    {
+        $dbUser = $this->retrieveEnvValue('ESJWT_DB_USER');
+        if (strlen($dbUser) > 0) {
+            $this->dbUser = $dbUser;
+        }
+        return true;
+    }
+
+    private function setDbPasswordFromEnvVar() {
+        $dbPassword = $this->retrieveEnvValue('ESJWT_DB_PASS');
+        if (strlen($dbPassword) > 0) {
+            $this->dbPassword = $dbPassword;
+        }
+        return true;
+    }
+
+    private function setJwtSecretFromEnvVar() {
+        $jwtSecret = $this->retrieveEnvValue('ESJWT_JWT_SECRET');
+        if (strlen($jwtSecret) > 0) {
+            $this->jwtSecret = $jwtSecret;
+        }
+        return true;
+    }
+
+    private function setIssFromEnvVar() {
+        $iss = $this->retrieveEnvValue('ESJWT_ISS');
+        if (strlen($iss) > 0) {
+            $this->iss = $iss;
+        }
+        return true;
+    }
+
+    private function setAudFromEnvVar() {
+        $aud = $this->retrieveEnvValue('ESJWT_AUD');
+        if (strlen($aud) > 0) {
+            $this->aud = $aud;
+        }
+        return true;
+    }
+
+    private function setPropertiesFromEnvVars() {
+        $this->setDsnFromEnvVar();
+        $this->setDbUserFromEnvVar();
+        $this->setDbPasswordFromEnvVar();
+        $this->setJwtSecretFromEnvVar();
+        $this->setIssFromEnvVar();
+        $this->setAudFromEnvVar();
+        return true;
+    }
+
+    private function setConfigFileProperty(string $configFileWithPath) {
+        if (strlen($configFileWithPath) < 1) {
+            $this->file = __DIR__.'/../config/ehjwt-conf.php';
+        }
+        else {
+            $this->file = $configFileWithPath;
+        }
+    }
+
+    private function loadConfigFile() {
+        if (file_exists($this->configFile)) {
+            $this->config = require $this->configFile;
+        }
+    }
+
+    private function setDsnFromConfig() {
+        $dsn = $this->config['dsn'];
+        if (strlen($dsn) > 0) {
+            $this->dsn = $dsn;
+        }
+        return true;
+    }
+
+    private function setDbUserFromConfig(){
+        $dbUser = $this->config['dbUser'];
+        if (strlen($dbUser) > 0) {
+            $this->dbUser = $dbUser;
+        }
+        return true;
+    }
+
+    private function setDbPasswordFromConfig() {
+        $dbPassword = $this->config['dbPassword'];
+        if (strlen($dbPassword) > 0) {
+            $this->dbPassword = $dbPassword;
+        }
+        return true;
+    }
+
+    private function setJwtSecretFromConfig() {
+        $jwtSecret = $this->config['jwtSecret'];
+        if (strlen($jwtSecret) > 0) {
+            $this->jwtSecret = $jwtSecret;
+        }
+        return true;
+    }
+
+    private function setIssFromConfig() {
+        $iss = $this->config['iss'];
+        if (strlen($iss) > 0) {
+            $this->iss = $iss;
+        }
+        return true;
+    }
+
+    private function setAudFromConfig() {
+        $aud = $this->config['aud'];
+        if (strlen($aud) > 0) {
+            $this->aud = $aud;
+        }
+        return true;
+    }
+
+    private function setDisallowArgumentsFromConfig() {
+        $disallowArguments = $this->config['disallowArguments'];
+        if (strlen($disallowArguments) > 0 && $disallowArguments == 'true') {
+            $this->enforceDisallowArguments = true;
             return true;
         }
         return false;
     }
 
-    public function __construct(string $secret = null, string $file = null, string $dsn = null, string $dbUser = null, string $dbPassword = null, string $iss = null, string $aud = null) {
+    private function setPropertiesFromConfigFile() {
+        $this->setDsnFromConfig();
+        $this->setDbUserFromConfig();
+        $this->setDbPasswordFromConfig();
+        $this->setJwtSecretFromConfig();
+        $this->setIssFromConfig();
+        $this->setAudFromConfig();
+        $this->setDisallowArgumentsFromConfig();
+        return true;
+    }
+
+    private function setDsnFromArguments(string $dsn) {
+        if (strlen($dsn) > 0) {
+            $this->dsn = $dsn;
+        }
+        return true;
+    }
+
+    private function setDbUserFromArguments(string $dbUser) {
+        if (strlen($dbUser) > 0) {
+            $this->dbUser = $dbUser;
+        }
+        return true;
+    }
+
+    private function setDbPasswordFromArguments(string $dbPassword) {
+        if (strlen($dbPassword) > 0) {
+            $this->dbPassword = $dbPassword;
+        }
+        return true;
+    }
+
+    private function setJwtSecretFromArguments(string $jwtSecret) {
+        if (strlen($jwtSecret) > 0) {
+            $this->jwtSecret = $jwtSecret;
+        }
+        return true;
+    }
+
+    private function setIssFromArguments(string $iss) {
+        if (strlen($iss) > 0) {
+            $this->iss = $iss;
+        }
+        return true;
+    }
+
+    private function setAudFromArguments(string $aud) {
+        if (strlen($aud) > 0) {
+            $this->aud = $aud;
+        }
+        return true;
+    }
+
+    private function setPropertiesFromArguments(string $secret = '', string $dsn = '', string $dbUser = '', string $dbPassword = '', string $iss = '', string $aud = '') {
+        $this->setDsnFromArguments($dsn);
+        $this->setDbUserFromArguments($dbUser);
+        $this->setDbPasswordFromArguments($dbPassword);
+        $this->setJwtSecretFromArguments($secret);
+        $this->setIssFromArguments($iss);
+        $this->setAudFromArguments($aud);
+        return true;
+    }
+
+    public function __construct(string $secret = '', string $file = '', string $dsn = '', string $dbUser = '', string $dbPassword = '', string $iss = '', string $aud = '') {
+
+        $this->setPropertiesFromEnvVars();
+
+        $this->checkEnforceUsingEnvVars();
 
         // var_dump('==========================================================');
 
-        // load configuration from environment variables
-
-        $dsnEnv = getenv('ESJWT_DSN');
-        $dbUserEnv = getenv('ESJWT_DB_USER');
-        $dbPasswordEnv = getenv('ESJWT_DB_PASS');
-        $jwtSecretEnv = getenv('ESJWT_JWT_SECRET');
-        $issEnv = getenv('ESJWT_ISS');
-        $audEnv = getenv('ESJWT_AUD');
-        
-
-    
-
-        if ($enforceUsingEnvVars()) {
-            $this->config['dsn'] = $dsnEnv;
-
-            $this->config['dbUser'] = $dbUserEnv;
-
-            $this->config['dbPassword'] = $dbPasswordEnv;
-
-            $this->jwtSecret = $jwtSecretEnv;
-
-            $this->iss = $issEnv;
-
-            $this->aud = $audEnv;
-
+        if ($this->enforceUsingEnvVars) {
             return true;
         }
         else {
-            if (is_null($file)) {
-                $this->file = __DIR__.'/../config/ehjwt-conf.php';
+            $this->setConfigFileProperty($file);
+            $this->loadConfigFile();
+            $this->setPropertiesFromConfigFile();
+            if ($this->checkDisallowArguments()) {
+                $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
             }
-            else {
-                $this->file = $file;
-            }
-
-            // check for config file existing before actual load
-            if (file_exists($this->file)) {
-                $config = require $this->file;
-            }
-
-            unset($file);
-
-            $this->config['dsn'] = $dsn ?? $config['dsn'] ?? $dsnEnv;
-
-            $this->config['dbUser'] = $dbUser ?? $config['dbUser'] ?? $dbUserEnv;
-
-            $this->config['dbPassword'] = $dbPassword ?? $config['dbPassword'] ?? $dbPasswordEnv;
-
-            $this->jwtSecret = $secret ?? $config['jwtSecret'] ?? $jwtSecretEnv;
-
-            $this->iss = $iss ?? $config['iss'] ?? $issEnv;
-
-            $this->aud = $iss ?? $config['aud'] ?? $audEnv;
-        } else {
-            $this->config['dsn'] = $dsnEnv;
-
-            $this->config['dbUser'] = $dbUserEnv;
-
-            $this->config['dbPassword'] = $dbPasswordEnv;
-
-            $this->jwtSecret = $jwtSecretEnv;
-
-            $this->iss = $issEnv;
-
-            $this->aud = $audEnv;
-
         }
-
-        unset($dsnEnv, $dbUserEnv, $dbPasswordEnv, $jwtSecretEnv, $issEnv, $audEnv, $useEnvVars);
-
+        return true;
     }
 
-    public function createToken()
-    {
-        // create header
-        $header = [
-            'alg' => 'HS256',
-            'typ' => 'JWT'
-        ];
-        // create body
+    public function addOrUpdateAudProperty(string $aud) {
+        if (strlen($aud) > 0) {
+            $this->aud = $aud;
+            return true;
+        }
+        return false;
+    }
 
-        $standardClaims  = [
+    public function addOrUpdateExpProperty(string $exp) {
+        // ToDo: this is an expiration date, do better here Chesney...
+        if (strlen($exp) > 0) {
+            $this->exp = $exp;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateIatProperty(string $iat) {
+        if (strlen($iat) > 0) {
+            $this->iat = $iat;
+            return true;
+        }
+        return false;
+    }
+
+    private function addOrUpdateIssProperty(string $iss) {
+        if (strlen($iss) > 0) {
+            $this->iss = $iss;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateJtiProperty(string $jti) {
+        if (strlen($jti) > 0) {
+            $this->jti = $jti;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateNbfProperty(string $nbf) {
+        if (strlen($nbf) > 0) {
+            $this->nbf = $nbf;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateSubProperty(string $sub) {
+        if (strlen($sub) > 0) {
+            $this->sub = $sub;
+            return true;
+        }
+        return false;
+    }
+
+    private function setStandardClaims() {
+        $this->standardClaims = [
             'aud' => $this->aud,
             'exp' => $this->exp,
             'iat' => $this->iat,
@@ -205,28 +438,70 @@ class Ehjwt
             'nbf' => $this->nbf,
             'sub' => $this->sub
         ];
+        return true;
+    }
 
+    public function addOrUpdateCustomClaim(string $key, $value) {
+        // listen, your users shouldn't set your token keys-- you should set the token keys
+        // no validation, be smart
+        // ToDo: maybe add validation so someone doesn't shoot themselves in the foot
+        if(strlen($key) > 0) {
+            $this->customClaims[$key] = $value;
+            return true;
+        }
+        return false;
+    }
+
+    private function setTokenClaims() {
         ksort($this->customClaims);
 
         foreach ($this->customClaims as $key => $value) {
-            if (null !== $value) {
-                $tokenClaims[$key] = $value;
+            if (strlen($value) > 0) {
+                $this->tokenClaims[$key] = $value;
             }
         };
 
-        foreach ($standardClaims as $key => $value) {
-            if (null !== $value) {
-                $tokenClaims[$key] = $value;
+        // standard claims set after to make custom claims the priority value, layered security strategy
+
+        foreach ($this->standardClaims as $key => $value) {
+            if (strlen($value)) {
+                $this->tokenClaims[$key] = $value;
             }
         }
 
-        ksort($tokenClaims);
+        ksort($this->tokenClaims);
+
+        return true;
+    }
+
+    private function jsonEncodeHeader() {
+        return json_encode(self::jwtHeader, JSON_FORCE_OBJECT);
+    }
+
+    private function jsonEncodeClaims() {
+        return json_encode($this->tokenClaims, JSON_FORCE_OBJECT);
+    }
+
+    private function jsonEncodeBody() {}
+
+    private function createSignature($base64UrlHeader, $base64UrlClaims) {
+        $jsonSignature = $this->makeHmacHash($base64UrlHeader, $base64UrlClaims);
+        return $this->base64UrlEncode($jsonSignature);
+    }
+
+    private function createToken() {
+        // header as immutable constant
+        // create body
+
+        $this->setStandardClaims();
+
+        $this->setTokenClaims();
 
         // convert from arrays to JSON objects
 
-        $jsonHeader = json_encode($header, JSON_FORCE_OBJECT);
+        $jsonHeader = $this->jsonEncodeHeader();
 
-        $jsonClaims = json_encode($tokenClaims, JSON_FORCE_OBJECT);
+        $jsonClaims = $this->jsonEncodeClaims();
 
         // encode the header and claims to base64url string
         $base64UrlHeader = $this->base64UrlEncode($jsonHeader);
@@ -234,8 +509,7 @@ class Ehjwt
         $base64UrlClaims = $this->base64UrlEncode($jsonClaims);
 
         // create signature
-
-        $jsonSignature = $this->makeHmacHash($base64UrlHeader, $base64UrlClaims);
+        $jsonSignature = $this->createSignature($base64UrlHeader, $base64UrlClaims);
 
         // encode signature to base64url string
         $base64UrlSignature = $this->base64UrlEncode($jsonSignature);
@@ -244,7 +518,7 @@ class Ehjwt
 
         $this->token = implode('.', $tokenParts);
 
-        return $this->token;
+        return true;
     }
 
     public function getToken()
@@ -252,6 +526,9 @@ class Ehjwt
         $this->createToken();
         return $this->token;
     }
+
+
+
     public function validateToken(string $tokenString)
     {
         $tokenParts = explode('.', $tokenString);
@@ -262,10 +539,8 @@ class Ehjwt
             return false;
         }
 
-
         //var_dump('header');
         $unpackedTokenHeader = json_decode($this->base64UrlDecode($tokenParts[0]), true);
-
 
         switch (json_last_error()) {
             case JSON_ERROR_NONE:
@@ -306,6 +581,7 @@ class Ehjwt
         if ($error !== '') {
             //var_dump('undecodable header');
             // 'Header does not decode'
+            throw new TokenValidationException();
             return false;
         }
 
@@ -448,7 +724,6 @@ class Ehjwt
             return false;
         }
 
-
         // the token checks out!
         return true;
     }
@@ -509,25 +784,26 @@ class Ehjwt
 
     public function clearClaims()
     {
-        $this->iss = null;
-        $this->sub = null;
-        $this->aud = null;
-        $this->exp = null;
-        $this->nbf = null;
-        $this->iat = null;
-        $this->jti = null;
+        $this->iss = '';
+        $this->sub = '';
+        $this->aud = '';
+        $this->exp = '';
+        $this->nbf = '';
+        $this->iat = '';
+        $this->jti = '';
 
         $this->customClaims = [];
     }
 
-    public function setStandardClaims(array $standardClaims)
+    // ToDo: find a way to meld this into the new claim thingey
+    public function OLDsetStandardClaims(array $standardClaims)
     {
         foreach ($standardClaims as $claimKey => $value) {
             if (mb_check_encoding($value, 'UTF-8')) {
                 if (in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true)) {
                     $this->{$claimKey} = $value;
                 } else {
-                    $this->{$claimKey} = null;
+                    $this->{$claimKey} = '';
                 }
             } else {
                 error_log('Ehjwt standard claim non-UTF-8 input string encoding error.');
@@ -590,7 +866,7 @@ class Ehjwt
     {
         // var_dump('writeRecordToRevocationTable()');
         try {
-            $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+            $dbh = $this->makeRevocationTableDatabaseConnection();
             
             $stmt = $dbh->prepare("INSERT INTO revoked_ehjwt (jti, sub, exp) VALUES (?, ?, ?)");
             
@@ -608,10 +884,14 @@ class Ehjwt
         }
     }
 
+    private function makeRevocationTableDatabaseConnection() {
+        return new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+    }
+
     private function deleteRecordFromRevocationTable(string $recordId)
     {
         try {
-            $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+            $dbh = $this->makeRevocationTableDatabaseConnection();
             
             $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE id = ?");
             
@@ -631,7 +911,6 @@ class Ehjwt
             $this->{$claimKey} = null;
         }
     }
-
 
     public function deleteCustomClaims(string $customClaimNamesCommaSeparated)
     {
@@ -665,7 +944,21 @@ class Ehjwt
 // DB Exceptions
 class EhjwtWriteRevocationRecordFailException extends \Exception
 {
-};
+    public function __construct($message, $code = 0, Exception $previous = null) {
+        // some code
+    }
+}
+
 class EhjwtDeleteRevocationRecordFailException extends \Exception
 {
-};
+    public function __construct($message, $code = 0, Exception $previous = null) {
+        // some code
+    }
+}
+
+class TokenValidationException extends \Exception
+{
+    public function __construct($message, $code = 0, Exception $previous = null) {
+        // some code
+    }
+}
