@@ -1,12 +1,12 @@
 <?php
 
-require 'src/Ehjwt.php';
+require '../../src/EHJWT/Ehjwt.php';
 
 use PHPUnit\Framework\TestCase;
-use bradchesney79\Ehjwt;
+use BradChesney79\EHJWT;
 
 /**
- * @coversDefaultClass \bradchesney79\Ehjwt
+ * @coversDefaultClass \BradChesney79\EHJWT
  */
 
 class ehjwtTest extends TestCase
@@ -33,7 +33,7 @@ class ehjwtTest extends TestCase
         // var_dump('testSecretLoads()');
         $secret = 'secret';
 
-        $reflectionClass = new ReflectionClass('bradchesney79\Ehjwt');
+        $reflectionClass = new ReflectionClass('BradChesney79\EHJWT');
         $reflectionProperty = $reflectionClass->getProperty('jwtSecret');
         $reflectionProperty->setAccessible(true);
 
