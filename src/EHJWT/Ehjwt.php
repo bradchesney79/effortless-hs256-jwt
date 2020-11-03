@@ -1,9 +1,9 @@
 <?php
-namespace bradchesney79;
+namespace BradChesney79;
 
 use PDO;
 
-class Ehjwt
+class EHJWT
 {
 
 
@@ -216,7 +216,7 @@ class Ehjwt
 
     private function setConfigFileProperty(string $configFileWithPath) {
         if (strlen($configFileWithPath) < 1) {
-            $this->file = __DIR__.'/../config/ehjwt-conf.php';
+            $this->file = __DIR__ . '/../config/ehjwt-conf.php';
         }
         else {
             $this->file = $configFileWithPath;
