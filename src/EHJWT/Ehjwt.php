@@ -547,41 +547,41 @@ class EHJWT
                 $error = ''; // JSON is valid // No error has occurred
                 break;
             case JSON_ERROR_DEPTH:
-                $error = 'The maximum stack depth has been exceeded.';
+                $error = 'The maximum stack depth has been exceeded from the JWT header.';
                 break;
             case JSON_ERROR_STATE_MISMATCH:
-                $error = 'Invalid or malformed JSON.';
+                $error = 'Invalid or malformed JWT header JSON.';
                 break;
             case JSON_ERROR_CTRL_CHAR:
-                $error = 'Control character error, possibly incorrectly encoded.';
+                $error = ' JWT header control character error, possibly incorrectly encoded.';
                 break;
             case JSON_ERROR_SYNTAX:
-                $error = 'Syntax error, malformed JSON.';
+                $error = 'Syntax error, JWT header malformed JSON.';
                 break;
             // PHP >= 5.3.3
             case JSON_ERROR_UTF8:
-                $error = 'Malformed UTF-8 characters, possibly incorrectly encoded.';
+                $error = 'Malformed UTF-8 JWT header characters, possibly incorrectly encoded.';
                 break;
             // PHP >= 5.5.0
             case JSON_ERROR_RECURSION:
-                $error = 'One or more recursive references in the value to be encoded.';
+                $error = 'One or more recursive references in the JWT header value to be encoded.';
                 break;
             // PHP >= 5.5.0
             case JSON_ERROR_INF_OR_NAN:
-                $error = 'One or more NAN or INF values in the value to be encoded.';
+                $error = 'One or more NAN or INF values in the JWT header value to be encoded.';
                 break;
             case JSON_ERROR_UNSUPPORTED_TYPE:
-                $error = 'A value of a type that cannot be encoded was given.';
+                $error = 'A JWT header value of a type that cannot be encoded was given.';
                 break;
             default:
-                $error = 'Unknown JSON error occured.';
+                $error = 'Unknown JWT header JSON error occured.';
                 break;
         }
 
         if ($error !== '') {
             //var_dump('undecodable header');
             // 'Header does not decode'
-            throw new TokenValidationException();
+            throw new TokenValidationException($error, 0);
             return false;
         }
 
@@ -594,31 +594,31 @@ class EHJWT
                 $error = '';
                 break;
             case JSON_ERROR_DEPTH:
-                $error = 'The maximum stack depth has been exceeded.';
+                $error = 'The maximum stack depth has been exceeded from the JWT payload.';
                 break;
             case JSON_ERROR_STATE_MISMATCH:
-                $error = 'Invalid or malformed JSON.';
+                $error = 'Invalid or malformed JWT payload JSON.';
                 break;
             case JSON_ERROR_CTRL_CHAR:
-                $error = 'Control character error, possibly incorrectly encoded.';
+                $error = ' JWT payload control character error, possibly incorrectly encoded.';
                 break;
             case JSON_ERROR_SYNTAX:
-                $error = 'Syntax error, malformed JSON.';
+                $error = 'Syntax error, JWT payload malformed JSON.';
                 break;
             case JSON_ERROR_UTF8:
-                $error = 'Malformed UTF-8 characters, possibly incorrectly encoded.';
+                $error = 'Malformed UTF-8 JWT payload characters, possibly incorrectly encoded.';
                 break;
             case JSON_ERROR_RECURSION:
-                $error = 'One or more recursive references in the value to be encoded.';
+                $error = 'One or more recursive references in the JWT payload value to be encoded.';
                 break;
             case JSON_ERROR_INF_OR_NAN:
-                $error = 'One or more NAN or INF values in the value to be encoded.';
+                $error = 'One or more NAN or INF values in the JWT payload value to be encoded.';
                 break;
             case JSON_ERROR_UNSUPPORTED_TYPE:
-                $error = 'A value of a type that cannot be encoded was given.';
+                $error = 'A JWT payload value of a type that cannot be encoded was given.';
                 break;
             default:
-                $error = 'Unknown JSON error occured.';
+                $error = 'Unknown JWT payload JSON error occured.';
                 break;
     }
 
@@ -812,12 +812,12 @@ class EHJWT
         }
     }
 
-    public function addTokenRevocationRecord(string $jti, string $sub, string $revocationExpiration)
+    public function addTokenRevocationRecord(string $revocationExpiration)
     {
 
         // revoke a token with specific particulars
         // var_dump('addTokenRevocationRecord()');
-        $this->writeRecordToRevocationTable($jti, $sub, $revocationExpiration);
+        $this->writeRecordToRevocationTable($revocationExpiration);
     }
 
     public function revokeToken(string $token)
@@ -831,23 +831,23 @@ class EHJWT
 
         // only add if the token is valid-- don't let imposters kill otherwise valid tokens
         if ($this->validateToken($this->token)) {
-            writeRecordToRevocationTable($this->jti, $this->sub, $revocationExpiration);
+            writeRecordToRevocationTable($revocationExpiration);
         }
     }
 
-    public function banUser(string $userSub, string $utcUnixEpochBanExpiration)
+    public function banUser(string $utcUnixEpochBanExpiration)
     {
         $banExp = $this->exp + 60;
 
         // insert jti of 0, sub... the userId to ban, and UTC Unix epoch of ban end
-        writeRecordToRevocationTable('0', $userSub, $utcUnixEpochBanExpiration);
+        writeRecordToRevocationTable($utcUnixEpochBanExpiration, true);
     }
 
-    public function permabanUser(string $userSub)
+    public function permabanUser()
     {
 
         // insert jti of 0, sub... the userId to ban, and UTC Unix epoch of ban end-- Tuesday after never
-        writeRecordToRevocationTable('0', $userSub, '18446744073709551615');
+        writeRecordToRevocationTable('18446744073709551615', true);
     }
 
     public function setCustomClaims(array $customClaims)
@@ -862,22 +862,27 @@ class EHJWT
         }
     }
 
-    private function writeRecordToRevocationTable(string $jti, string $sub, string $exp)
+    private function writeRecordToRevocationTable(string $exp, $ban = false)
     {
         // var_dump('writeRecordToRevocationTable()');
         try {
             $dbh = $this->makeRevocationTableDatabaseConnection();
             
             $stmt = $dbh->prepare("INSERT INTO revoked_ehjwt (jti, sub, exp) VALUES (?, ?, ?)");
-            
-            $stmt->bindParam(1, $jti);
-            $stmt->bindParam(2, $sub);
+
+            if ($ban) {
+                $stmt->bindParam(1, 0);
+            }
+            else {
+                $stmt->bindParam(1, $this->jti);
+            }
+            $stmt->bindParam(2, $this->sub);
             $stmt->bindParam(3, $exp);
 
             $stmt->execute();
 
-            $dbh = null;
-            $stmt = null;
+            $dbh = "";
+            $stmt = "";
         } catch (PDOException $e) {
             error_log('Ehjwt write revocation record error: ' . $e->getMessage());
             throw new EhjwtWriteRevocationRecordFailException('Ehjwt write revocation record error: ' . $e->getMessage());
@@ -920,6 +925,7 @@ class EHJWT
         }
     }
 
+    // Necessary, done
     private function unpackToken(bool $clearClaimsFirst = true)
     {
         if ($clearClaimsFirst === true) {
