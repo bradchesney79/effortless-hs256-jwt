@@ -380,24 +380,24 @@ class EHJWT
 //        }
 //        return false;
 //    }
-//
-//    private function addOrUpdateExpProperty(string $exp) {
-//        // ToDo: this is an expiration date, do better here Chesney...
-//        if (strlen($exp) > 0) {
-//            $this->exp = $exp;
-//            return true;
-//        }
-//        return false;
-//    }
-//
-//    private function addOrUpdateIatProperty(string $iat) {
-//        if (strlen($iat) > 0) {
-//            $this->iat = $iat;
-//            return true;
-//        }
-//        return false;
-//    }
-//
+
+    private function addOrUpdateExpProperty(string $exp) {
+        // ToDo: this is an expiration date, do better here Chesney...
+        if (strlen($exp) > 0) {
+            $this->exp = $exp;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateIatProperty(string $iat) {
+        if (strlen($iat) > 0) {
+            $this->iat = $iat;
+            return true;
+        }
+        return false;
+    }
+
 //    private function addOrUpdateIssProperty(string $iss) {
 //        if (strlen($iss) > 0) {
 //            $this->iss = $iss;
@@ -405,30 +405,30 @@ class EHJWT
 //        }
 //        return false;
 //    }
-//
-//    private function addOrUpdateJtiProperty(string $jti) {
-//        if (strlen($jti) > 0) {
-//            $this->jti = $jti;
-//            return true;
-//        }
-//        return false;
-//    }
-//
-//    private function addOrUpdateNbfProperty(string $nbf) {
-//        if (strlen($nbf) > 0) {
-//            $this->nbf = $nbf;
-//            return true;
-//        }
-//        return false;
-//    }
-//
-//    private function addOrUpdateSubProperty(string $sub) {
-//        if (strlen($sub) > 0) {
-//            $this->sub = $sub;
-//            return true;
-//        }
-//        return false;
-//    }
+
+    public function addOrUpdateJtiProperty(string $jti) {
+        if (strlen($jti) > 0) {
+            $this->jti = $jti;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateNbfProperty(string $nbf) {
+        if (strlen($nbf) > 0) {
+            $this->nbf = $nbf;
+            return true;
+        }
+        return false;
+    }
+
+    public function addOrUpdateSubProperty(string $sub) {
+        if (strlen($sub) > 0) {
+            $this->sub = $sub;
+            return true;
+        }
+        return false;
+    }
 
     private function setStandardClaims() {
         $this->standardClaims = [
@@ -447,15 +447,33 @@ class EHJWT
         // listen, your users shouldn't set your token keys-- you should set the token keys
         // no validation, be smart
         // ToDo: maybe add validation so someone doesn't shoot themselves in the foot
+        // ToDo: break out specific custom claim methods for validations of basic types
+        if(strlen($key) > 0 && $value != null) {
+            if (in_array($key, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true)) {
+                return false;
+            }
+            else {
+                $this->customClaims[$key] = $value;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function clearCustomClaim(string $key) {
         if(strlen($key) > 0) {
-            $this->customClaims[$key] = $value;
-            return true;
+            if (in_array($key, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true)) {
+                return false;
+            }
+            else {
+                unset($this->customClaims[$key]);
+                return true;
+            }
         }
         return false;
     }
 
     private function setTokenClaims() {
-        ksort($this->customClaims);
 
         foreach ($this->customClaims as $key => $value) {
             if (strlen($value) > 0) {
@@ -490,8 +508,9 @@ class EHJWT
     }
 
     private function createToken() {
+        // create the object
         // header as immutable constant
-        // create body
+        // set the properties
 
         $this->setStandardClaims();
 
@@ -521,28 +540,52 @@ class EHJWT
         return true;
     }
 
+    private function loadToken(string $tokenString) {
+        if (is_string($tokenString)) {
+            $this->token = $tokenString;
+            return true;
+        }
+        return false;
+    }
+
     public function getToken() {
         // Make a new EHJWT object
         // populate the properties
         // Then use this to get a token
-
-        $this->createToken();
         return $this->token;
     }
 
+    private function getTokenParts() {
+
+        try {
+            $tokenParts = explode('.', $this->token);
+            if ($this->verifyThreeMembers($tokenParts)) {
+                return $tokenParts;
+            }
+            throw new EhjwtInvalidTokenException('Token does not contain three delimited sections', 0);
+        }
+
+        catch (EhjwtInvalidTokenException $e) {
+            error_log($e->getMessage());
+            return false;
+        }
 
 
-    public function validateToken(string $tokenString) {
-        $tokenParts = explode('.', $tokenString);
+    }
 
-        if (3 !== count($tokenParts)) {
+    private function verifyThreeMembers(array $array) {
+
+        if (3 !== count($array)) {
             //var_dump('segments');
             // 'Incorrect quantity of segments'
             return false;
         }
+        return true;
+    }
 
-        //var_dump('header');
-        $unpackedTokenHeader = json_decode($this->base64UrlDecode($tokenParts[0]), true);
+    private function decodeTokenHeader(string $jwtHeader) {
+
+        $decodedHeader = json_decode($this->base64UrlDecode($jwtHeader), true);
 
         switch (json_last_error()) {
             case JSON_ERROR_NONE:
@@ -586,14 +629,19 @@ class EHJWT
                 // 'Header does not decode'
                 throw new TokenValidationException($error, 0);
             }
+            else {
+                return $decodedHeader;
+            }
         }
         catch (TokenValidationException $e) {
             error_log($error);
             return false;
         }
+    }
 
-        //var_dump('payload');
-        $unpackedTokenPayload = json_decode($this->base64UrlDecode($tokenParts[1]), true);
+    private function decodeTokenPayload($jwtPayload) {
+
+        $decodedPayload = json_decode($this->base64UrlDecode($jwtPayload), true);
 
         switch (json_last_error()) {
             case JSON_ERROR_NONE:
@@ -635,15 +683,48 @@ class EHJWT
                 // 'Payload does not decode'
                 throw new TokenValidationException($error, 0);
             }
+            else {
+                return $decodedPayload;
+            }
         }
         catch (TokenValidationException $e) {
             error_log($error);
             return false;
         }
+    }
 
-        if ($unpackedTokenHeader['alg'] !== 'HS256') {
-            //var_dump('algorithm');
-            // 'Wrong algorithm'
+    public function validateToken() {
+        // create token
+        // load token
+        // use this to validate
+
+        $tokenParts = $this->getTokenParts();
+
+        //var_dump('header');
+        $unpackedTokenHeader = $this->decodeTokenHeader($tokenParts[0]);
+
+        //var_dump('payload');
+        $unpackedTokenPayload = $this->decodeTokenPayload($tokenParts[1]);
+
+        // set object properties with header & payload values
+
+
+        // set the claims properties
+
+        $this->setStandardClaims();
+
+        $this->setTokenClaims();
+
+        // do the properties check out
+        try {
+            if ($unpackedTokenHeader['alg'] !== 'HS256') {
+                //var_dump('algorithm');
+                // 'Wrong algorithm'
+                throw new EhjwtInvalidTokenException('Encryption algorithm tampered with', 0);
+            }
+        }
+        catch (EhjwtInvalidTokenException $e) {
+            error_log($e->getMessage());
             return false;
         }
 
@@ -654,9 +735,16 @@ class EHJWT
         $expiryTime = $unpackedTokenPayload['exp'];
 
         // a good JWT integration uses token expiration, I am forcing your hand
-        if (($utcTimeNow - $expiryTime) > 0) {
-            //var_dump('expired');
-            // 'Expired (exp)'
+        try {
+            if (($utcTimeNow - $expiryTime) > 0) {
+                //var_dump('expired');
+                // 'Expired (exp)'
+                throw new EhjwtInvalidTokenException('Token is expired', 0);
+
+            }
+        }
+        catch (EhjwtInvalidTokenException $e) {
+            error_log($e->getMessage());
             return false;
         }
 
@@ -664,15 +752,21 @@ class EHJWT
 
         // if nbf is set
         if (null !== $notBeforeTime) {
-            if ($notBeforeTime > $utcTimeNow) {
-                //var_dump('too early');
-                // 'Too early for not before(nbf) value'
+            try {
+                if ($notBeforeTime > $utcTimeNow) {
+                    //var_dump('too early');
+                    // 'Too early for not before(nbf) value'
+                    throw new EhjwtInvalidTokenException('Token issued before nbf header allows', 0);
+                }
+            }
+            catch (EhjwtInvalidTokenException $e) {
+                error_log($e->getMessage());
                 return false;
             }
         }
 
         // create DB connection
-        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NAMED));
 
         // clean out revoked token records if the UTC unix time ends in "0"
         if (0 == (substr($utcTimeNow, -1) + 0)) {
@@ -682,17 +776,18 @@ class EHJWT
 
                     $stmt->execute();
                 } catch (PDOException $e) {
-                    throw new EhjwtClearOldRevocationRecordsFailException('Ehjwt clear old revocation records error: ' . $e->getMessage());
+                    throw new EhjwtClearOldRevocationRecordsFailException('Ehjwt clear old revocation records error', 0);
                 }
             }
             catch (EhjwtClearOldRevocationRecordsFailException $e) {
-                error_log('Ehjwt clear old revocation records error: ' . $e->getMessage());
+                error_log($e->getMessage());
             }
 
             // clean up DB artifacts
             $stmt = null;
         }
 
+        // fix bind statement
         $stmt = $dbh->prepare("SELECT * FROM revoked_ehjwt where sub = ?");
         $stmt->bindParam(1, $unpackedTokenPayload['sub']);
 
@@ -743,17 +838,11 @@ class EHJWT
         return true;
     }
 
-    public function unpackToken($tokenString) {
-    {
-        $this->token = $tokenString;
-        //$this->unpackToken();
-    }
-
     // From here out claims are equal, standard and custom have parity
 
-    public function getClaims()
-    {
-        //$this->unpackToken($this->token);
+    public function getTokenClaims() {
+
+        $this->unpackToken($this->token);
 
         $standardClaims  = [
             'iss' => $this->iss,
@@ -821,31 +910,27 @@ class EHJWT
                     $this->{$claimKey} = '';
                 }
             } else {
-                error_log('Ehjwt standard claim non-UTF-8 input string encoding error.');
-                throw new EhjwtCustomClaimsInputStringException('Ehjwt standard claim non-UTF-8 input string encoding error.');
+                try {
+                    throw new EhjwtCustomClaimsInputStringException('Ehjwt standard claim non-UTF-8 input string encoding error.');
+                }
+                catch (EhjwtCustomClaimsInputStringException $e) {
+                    error_log($e->getMessage());
+                }
             }
         }
     }
 
-    public function addTokenRevocationRecord(string $revocationExpiration)
-    {
-
-        // revoke a token with specific particulars
-        // var_dump('addTokenRevocationRecord()');
-        $this->writeRecordToRevocationTable($revocationExpiration);
-    }
-
-    public function revokeToken(string $token)
-    {
-
-        // unpack the token, add it to the revocation table
-
-        $this->loadToken($token);
-
-        $revocationExpiration = (int)$this->exp + 30;
+    public function revokeToken() {
 
         // only add if the token is valid-- don't let imposters kill otherwise valid tokens
         if ($this->validateToken($this->token)) {
+
+            // unpack the token, add it to the revocation table
+
+            $this->unpackToken($this->token);
+
+            $revocationExpiration = (int)$this->exp + 30;
+
             $this->writeRecordToRevocationTable($revocationExpiration);
         }
     }
@@ -875,7 +960,7 @@ class EHJWT
                 }
             }
             catch (EhjwtCustomClaimsInputStringException $e) {
-                error_log('Ehjwt custom claim non-UTF-8 input string encoding error.');
+                error_log($e->getMessage());
             }
         }
     }
@@ -885,12 +970,14 @@ class EHJWT
         // var_dump('writeRecordToRevocationTable()');
         try {
             try {
+                $userBanJtiPlaceholder = 0;
+
                 $dbh = $this->makeRevocationTableDatabaseConnection();
 
                 $stmt = $dbh->prepare("INSERT INTO revoked_ehjwt (jti, sub, exp) VALUES (?, ?, ?)");
 
                 if ($ban) {
-                    $stmt->bindParam(1, 0);
+                    $stmt->bindParam(1, $userBanJtiPlaceholder);
                 } else {
                     $stmt->bindParam(1, $this->jti);
                 }
@@ -906,12 +993,12 @@ class EHJWT
             }
         }
         catch (EhjwtWriteRevocationRecordFailException $e) {
-            error_log('Ehjwt write revocation record error: ' . $e->getMessage());
+            error_log($e->getMessage());
         }
     }
 
     private function makeRevocationTableDatabaseConnection() {
-        return new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_PERSISTENT => true ));
+        return new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ));
     }
 
     private function deleteRecordFromRevocationTable(string $recordId)
@@ -953,14 +1040,16 @@ class EHJWT
     }
 
     // Necessary, done
-    private function unpackToken(bool $clearClaimsFirst = true)
+    private function unpackToken(string $tokenString, bool $clearClaimsFirst = true)
     {
         if ($clearClaimsFirst === true) {
             $this->clearClaims();
         }
 
-        $tokenParts = explode('.', $this->token);
-        $tokenClaims = json_decode($this->base64UrlDecode($tokenParts[1]), true);
+        $tokenParts = $this->getTokenParts($this->token);
+
+        $tokenClaims = $this->decodeTokenPayload($tokenParts[1]);
+
         foreach ($tokenClaims as $claimKey => $value) {
             // ToDo: in array this...
             if (in_array($claimKey, array('iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'), true)) {
@@ -971,7 +1060,6 @@ class EHJWT
         }
     }
 }
-
 
 // DB Exceptions
 
@@ -1027,6 +1115,16 @@ class TokenValidationException extends \Exception
 
 // Token Exceptions
 class EhjwtCustomClaimsInputStringException extends \Exception
+{
+    public function __construct($message = "", $code = 0, Exception $previous = null) {
+        parent::__construct($message = '', $code = 0);
+
+        // some code
+        return false;
+    }
+}
+
+class EhjwtInvalidTokenException extends \Exception
 {
     public function __construct($message = "", $code = 0, Exception $previous = null) {
         parent::__construct($message = '', $code = 0);
