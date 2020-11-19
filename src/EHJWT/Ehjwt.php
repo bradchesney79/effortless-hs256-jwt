@@ -499,12 +499,10 @@ class EHJWT
         return true;
     }
 
-    public function addOrUpdateCustomClaim(string $key, $value)
+    public function addOrUpdateCustomClaim(string $key, $value, $requiredType = 'mixed')
     {
         // listen, your users shouldn't set your token keys-- you should set the token keys
         // no validation, be smart
-        // ToDo: maybe add validation so someone doesn't shoot themselves in the foot
-        // ToDo: break out specific custom claim methods for validations of basic types
         if (strlen($key) > 0 && $value != null)
         {
             if (in_array($key, array(
@@ -521,8 +519,18 @@ class EHJWT
             }
             else
             {
-                $this->customClaims[$key] = $value;
-                return true;
+                try {
+                    if (gettype($value) == $requiredType || $requiredType === 'mixed') {
+                        $this->customClaims[$key] = $value;
+                        return true;
+                    }
+                    else {
+                        throw new EhjwtCustomClaimsInputStringException('Specified custom claims required type mismatch', 0);
+                    }
+                }
+                catch (EhjwtCustomClaimsInputStringException $e) {
+                    error_log($e->getMessage());
+                }
             }
         }
         return false;
@@ -553,30 +561,7 @@ class EHJWT
         return false;
     }
 
-    private function setTokenClaims()
-    {
 
-        foreach ($this->customClaims as $key => $value)
-        {
-            if (strlen($value) > 0)
-            {
-                $this->tokenClaims[$key] = $value;
-            }
-        }
-
-        // standard claims set after to make custom claims the priority value, layered security strategy
-        foreach ($this->standardClaims as $key => $value)
-        {
-            if (strlen($value))
-            {
-                $this->tokenClaims[$key] = $value;
-            }
-        }
-
-        ksort($this->tokenClaims);
-
-        return true;
-    }
 
     private function jsonEncodeHeader()
     {
@@ -599,7 +584,6 @@ class EHJWT
         // create the object
         // header as immutable constant
         // set the properties
-        $this->setStandardClaims();
 
         $this->setTokenClaims();
 
@@ -630,11 +614,27 @@ class EHJWT
         return true;
     }
 
+    private function getUtcTime() {
+        $date = new DateTime('now');
+        return $date->getTimestamp();
+    }
+
+    public function reissueToken($tokenString) {
+        $this->loadToken($tokenString);
+
+        $this->addOrUpdateExpProperty($this->getUtcTime());
+
+        $this->createToken();
+
+        return $this->getToken();
+    }
+
     private function loadToken(string $tokenString)
     {
         if (is_string($tokenString))
         {
             $this->token = $tokenString;
+            $this->unpackToken(true);
             return true;
         }
         return false;
@@ -642,7 +642,7 @@ class EHJWT
 
     public function getToken()
     {
-        // Make a new EHJWT object
+        // Make a new EHJWT object instance
         // populate the properties
         // Then use this to get a token
         return $this->token;
@@ -809,7 +809,7 @@ class EHJWT
 
     public function validateToken()
     {
-        // create token
+        // create token object instance
         // load token
         // use this to validate
         $tokenParts = $this->getTokenParts();
@@ -844,9 +844,7 @@ class EHJWT
             return false;
         }
 
-        $date = new DateTime('now');
-
-        $utcTimeNow = $date->getTimestamp();
+        $utcTimeNow = $this->getUtcTime();
 
         $expiryTime = $unpackedTokenPayload['exp'];
 
@@ -893,7 +891,7 @@ class EHJWT
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NAMED
         ));
 
-        // clean out revoked token records if the UTC unix time ends in "0"
+        // clean out revoked token records if the UTC unix time ends in '0'
         if (0 == (substr($utcTimeNow, -1) + 0))
         {
             try
@@ -1026,49 +1024,11 @@ class EHJWT
         $this->customClaims = [];
     }
 
-    // ToDo: find a way to meld this into the new claim thingey
-    public function OLDsetStandardClaims(array $standardClaims)
-    {
-        foreach ($standardClaims as $claimKey => $value)
-        {
-            if (mb_check_encoding($value, 'UTF-8'))
-            {
-                if (in_array($claimKey, array(
-                    'iss',
-                    'sub',
-                    'aud',
-                    'exp',
-                    'nbf',
-                    'iat',
-                    'jti'
-                ) , true))
-                {
-                    $this->{$claimKey} = $value;
-                }
-                else
-                {
-                    $this->{$claimKey} = '';
-                }
-            }
-            else
-            {
-                try
-                {
-                    throw new EhjwtCustomClaimsInputStringException('Ehjwt standard claim non-UTF-8 input string encoding error.');
-                }
-                catch(EhjwtCustomClaimsInputStringException $e)
-                {
-                    error_log($e->getMessage());
-                }
-            }
-        }
-    }
-
     public function revokeToken()
     {
 
         // only add if the token is valid-- don't let imposters kill otherwise valid tokens
-        if ($this->validateToken($this->token))
+        if ($this->validateToken())
         {
 
             // unpack the token, add it to the revocation table
@@ -1116,6 +1076,31 @@ class EHJWT
         }
     }
 
+    private function setTokenClaims()
+    {
+
+        foreach ($this->customClaims as $key => $value)
+        {
+            if (strlen($value) > 0)
+            {
+                $this->tokenClaims[$key] = $value;
+            }
+        }
+
+        // standard claims set after to make custom claims the priority value, layered security strategy
+        foreach ($this->standardClaims as $key => $value)
+        {
+            if (strlen($value))
+            {
+                $this->tokenClaims[$key] = $value;
+            }
+        }
+
+        ksort($this->tokenClaims);
+
+        return true;
+    }
+
     private function writeRecordToRevocationTable(string $exp, $ban = false)
     {
         // var_dump('writeRecordToRevocationTable()');
@@ -1142,8 +1127,8 @@ class EHJWT
 
                 $stmt->execute();
 
-                $dbh = "";
-                $stmt = "";
+                unset($dbh);
+                unset($stmt);
             }
             catch(PDOException $e)
             {
@@ -1207,21 +1192,19 @@ class EHJWT
         }
     }
 
-    // Necessary, done
-    private function unpackToken(string $tokenString, bool $clearClaimsFirst = true)
+    private function unpackToken(bool $clearClaimsFirst = true)
     {
         if ($clearClaimsFirst === true)
         {
             $this->clearClaims();
         }
 
-        $tokenParts = $this->getTokenParts($this->token);
+        $tokenParts = $this->getTokenParts();
 
         $tokenClaims = $this->decodeTokenPayload($tokenParts[1]);
 
         foreach ($tokenClaims as $claimKey => $value)
         {
-            // ToDo: in array this...
             if (in_array($claimKey, array(
                 'iss',
                 'sub',
@@ -1230,7 +1213,7 @@ class EHJWT
                 'nbf',
                 'iat',
                 'jti'
-            ) , true))
+            ) , true) && !is_null($value))
             {
                 $this->{$claimKey} = $value;
             }
@@ -1243,9 +1226,9 @@ class EHJWT
 }
 
 // DB Exceptions
-class PDOException extends \Exception
+class PDOException extends Exception
 {
-    public function __construct($message = '', $code = 0, Exception $previous = null)
+    public function __construct(string $message = '', int $code = 0, Exception $previous = null)
     {
         parent::__construct($message = '', $code = 0);
 
@@ -1254,9 +1237,9 @@ class PDOException extends \Exception
     }
 }
 
-class EhjwtWriteRevocationRecordFailException extends \Exception
+class EhjwtWriteRevocationRecordFailException extends Exception
 {
-    public function __construct($message, $code = 0, Exception $previous = null)
+    public function __construct(string $message = '', int $code = 0, Exception $previous = null)
     {
         parent::__construct($message = '', $code = 0);
 
@@ -1265,9 +1248,9 @@ class EhjwtWriteRevocationRecordFailException extends \Exception
     }
 }
 
-class EhjwtDeleteRevocationRecordFailException extends \Exception
+class EhjwtDeleteRevocationRecordFailException extends Exception
 {
-    public function __construct($message, $code = 0, Exception $previous = null)
+    public function __construct(string $message, int $code = 0, Exception $previous = null)
     {
         parent::__construct($message = '', $code = 0);
 
@@ -1276,9 +1259,9 @@ class EhjwtDeleteRevocationRecordFailException extends \Exception
     }
 }
 
-class EhjwtClearOldRevocationRecordsFailException extends \Exception
+class EhjwtClearOldRevocationRecordsFailException extends Exception
 {
-    public function __construct($message, $code = 0, Exception $previous = null)
+    public function __construct(string $message, int $code = 0, Exception $previous = null)
     {
         parent::__construct($message = '', $code = 0);
 
@@ -1287,9 +1270,9 @@ class EhjwtClearOldRevocationRecordsFailException extends \Exception
     }
 }
 
-class TokenValidationException extends \Exception
+class TokenValidationException extends Exception
 {
-    public function __construct($message, $code = 0, Exception $previous = null)
+    public function __construct(string $message, int $code = 0, Exception $previous = null)
     {
         parent::__construct($message = '', $code = 0);
 
@@ -1299,9 +1282,9 @@ class TokenValidationException extends \Exception
 }
 
 // Token Exceptions
-class EhjwtCustomClaimsInputStringException extends \Exception
+class EhjwtCustomClaimsInputStringException extends Exception
 {
-    public function __construct($message = "", $code = 0, Exception $previous = null)
+    public function __construct(string $message = '', int $code = 0, Exception $previous = null)
     {
         parent::__construct($message = '', $code = 0);
 
@@ -1310,9 +1293,9 @@ class EhjwtCustomClaimsInputStringException extends \Exception
     }
 }
 
-class EhjwtInvalidTokenException extends \Exception
+class EhjwtInvalidTokenException extends Exception
 {
-    public function __construct($message = "", $code = 0, Exception $previous = null)
+    public function __construct(string $message = '', int $code = 0, Exception $previous = null)
     {
         parent::__construct($message = '', $code = 0);
 
