@@ -46,7 +46,7 @@ options passed to the constructor supercedes config file provided options which 
 
 *Alternatively, you may skip using env vars or a config file and create the object with parameters as the configs to use as such:*
 ```php
-$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword, $sub, $aud);
+$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword, $iss, $aud);
 ```
 
 * Should you want to prevent developers from using a config file or options passed to the constructor, you may set ESJWT_USE_ENV_VARS as true to enforce usage of the environment variables-- it is an option available to you but it isn't fool proof.
@@ -59,11 +59,12 @@ _**I usually do this via a provisioning script that fires off the SQL script aft
 
 Installation via composer is not required-- I just think it is the best way
 
-```bash
-composer require bradchesney79/effortless-hs256-jwt
+```php
+require 'path/to/Ehjwt.php';
 ```
 
-*If you have a composer.lock file, substitute composer update in place of composer require...*
+require_once, include, include_once... only you will really know what is best for you.
+
 
 ## Step 2 - Usage:
 
@@ -74,20 +75,30 @@ composer require bradchesney79/effortless-hs256-jwt
 Be sure to do the completely normal PHP require or require_once of vendor/autoload.php
 
 ```php
-use bradchesney79/ehjwt;
+use BradChesney79/EHJWT;
 ```
 
 *Unwashed heathens that resist using composer will need something like this:*
 
 ```php
-require_once 'path/bradchesney79/effortless-hs256-jwt/src/Ehjwt.php';
+require_once 'path/to/Ehjwt.php';
 ```
 
 
 ### Create a token:
 
+```php
+$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword', 'The Issuing Website', 'User Type');
+
+// you don't have to make the 'iss' property the issuing website... you don't have to make the 'aud' property the audience user type
+
+
+
+```
 
 ### Read the token string:
+
+
 
 
 ### Validate a token:
