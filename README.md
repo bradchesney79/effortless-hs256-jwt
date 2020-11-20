@@ -70,16 +70,13 @@ Installation via composer is not required-- I just think it is the best way
 
 ## Step 2 - Usage with Composer:
 
-
 ### Make the code available:
-
 
 Be sure to do the completely normal PHP require or require_once of vendor/autoload.php
 
 ```php
 use BradChesney79/EHJWT;
 ```
-
 
 
 ### Create a token, append/update claims, get the token string:
