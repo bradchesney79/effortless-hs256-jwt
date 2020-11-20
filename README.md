@@ -1,4 +1,4 @@
-<span style="color:red">I believe I have brought the library to a usable and critiquable state. As of now, January 3rd of 2019, consider this library development stage grade code.</span>
+<span style="color:red">I believe I have brought the library to a usable and critiquable state. As of now, November 20th of 2019, I consider this library beta code.</span>
 
 I created this package because I didn't love the existing libraries out there. Also, this package has only a dependency on the PDO database driver avaialble.
 
