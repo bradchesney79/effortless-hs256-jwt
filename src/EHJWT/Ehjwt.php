@@ -100,7 +100,7 @@ class EHJWT
      *
      * @var string
      */
-    protected string $configFile;
+    protected string $configFile = '';
 
     /**
      * The config data.
@@ -145,7 +145,7 @@ class EHJWT
             $this->enforceDisallowArguments = 'true';
             return true;
         }
-        if ($this->config['disallowArguments'] == 'true')
+        if ($this->presenceOfConfigFile() && $this->config['disallowArguments'] == 'true')
         {
             $this->enforceDisallowArguments = 'true';
             return true;
@@ -237,14 +237,19 @@ class EHJWT
 
     private function setConfigFileProperty(string $configFileWithPath)
     {
+        $this->configFile = '';
+        $configFile = $configFileWithPath;
+
         if (strlen($configFileWithPath) < 1)
         {
-            $this->file = __DIR__ . '/../config/ehjwt-conf.php';
+            $configFile = __DIR__ . '/../config/ehjwt-conf.php';
         }
-        else
-        {
-            $this->file = $configFileWithPath;
+
+        if (file_exists($configFile)) {
+            $this->configFile = $configFile;
+            return true;
         }
+        return false;
     }
 
     private function loadConfigFile()
@@ -258,31 +263,32 @@ class EHJWT
     private function setDsnFromConfig()
     {
         $dsn = $this->config['dsn'];
-        if (strlen($dsn) > 0)
-        {
+        if (strlen($dsn) > 0) {
             $this->dsn = $dsn;
+            return true;
         }
-        return true;
+
+        return false;
     }
 
     private function setDbUserFromConfig()
     {
         $dbUser = $this->config['dbUser'];
-        if (strlen($dbUser) > 0)
-        {
+        if (strlen($dbUser) > 0) {
             $this->dbUser = $dbUser;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setDbPasswordFromConfig()
     {
         $dbPassword = $this->config['dbPassword'];
-        if (strlen($dbPassword) > 0)
-        {
+        if (strlen($dbPassword) > 0) {
             $this->dbPassword = $dbPassword;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setJwtSecretFromConfig()
@@ -326,16 +332,26 @@ class EHJWT
         return false;
     }
 
+    private function presenceOfConfigFile() {
+        if (strlen($this->configFile > 0)) {
+            return true;
+        }
+        return false;
+    }
+
     private function setPropertiesFromConfigFile()
     {
-        $this->setDsnFromConfig();
-        $this->setDbUserFromConfig();
-        $this->setDbPasswordFromConfig();
-        $this->setJwtSecretFromConfig();
-        $this->setIssFromConfig();
-        $this->setAudFromConfig();
-        $this->setDisallowArgumentsFromConfig();
-        return true;
+        if ($this->presenceOfConfigFile()) {
+            $this->setDsnFromConfig();
+            $this->setDbUserFromConfig();
+            $this->setDbPasswordFromConfig();
+            $this->setJwtSecretFromConfig();
+            $this->setIssFromConfig();
+            $this->setAudFromConfig();
+            $this->setDisallowArgumentsFromConfig();
+            return true;
+        }
+        return false;
     }
 
     private function setDsnFromArguments(string $dsn)
@@ -435,7 +451,7 @@ class EHJWT
     //        }
     //        return false;
     //    }
-    private function addOrUpdateExpProperty(string $exp)
+    public function addOrUpdateExpProperty(string $exp)
     {
         // ToDo: this is an expiration date, do better here Chesney...
         if (strlen($exp) > 0)
@@ -580,7 +596,7 @@ class EHJWT
         return $this->base64UrlEncode($jsonSignature);
     }
 
-    private function createToken()
+    public function createToken()
     {
         // create the object
         // header as immutable constant
