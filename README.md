@@ -167,6 +167,12 @@ Run the tests with the PHPUnit installed in the dev dependencies
 vendor/bin/phpunit --coverage-clover /tmp/clover/clover.xml --coverage-html /tmp/clover
 ```
 
+## Step B - Count Lines of Code:
+
+```bash
+cloc --exclude-dir=vendor .
+```
+
 ToDo:
 
 - Write last few tests for token validation
