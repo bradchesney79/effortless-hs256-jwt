@@ -823,7 +823,6 @@ class EHJWT
 
         // set object properties with header & payload values
 
-
         // set the claims properties
         $this->setStandardClaims();
 
@@ -1041,18 +1040,22 @@ class EHJWT
         }
     }
 
-    public function banUser(string $utcUnixEpochBanExpiration)
+    public function banUser(string $utcUnixTimestampBanExpiration)
     {
         $banExp = (int)$this->exp + 60;
 
         // insert jti of 0, sub... the userId to ban, and UTC Unix epoch of ban end
-        $this->writeRecordToRevocationTable($utcUnixEpochBanExpiration, true);
+        $this->writeRecordToRevocationTable($utcUnixTimestampBanExpiration, true);
     }
 
     public function permabanUser()
     {
         // insert jti of 0, sub... the userId to ban, and UTC Unix epoch of ban end-- Tuesday after never
         $this->writeRecordToRevocationTable('18446744073709551615', true);
+    }
+
+    public function unbanUser() {
+        $this->deleteRecordsFromRevocationTable();
     }
 
     private function setCustomClaims(array $customClaims)
@@ -1142,6 +1145,37 @@ class EHJWT
         }
     }
 
+    private function deleteRecordsFromRevocationTable()
+    {
+        // var_dump('deleteRecordToRevocationTable()');
+        try
+        {
+            try
+            {
+                $userBanJtiPlaceholder = 0;
+
+                $dbh = $this->makeRevocationTableDatabaseConnection();
+
+                $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE sub = ? AND jti = $userBanJtiPlaceholder");
+
+                $stmt->bindParam(1, $this->sub);
+
+                $stmt->execute();
+
+                unset($dbh);
+                unset($stmt);
+            }
+            catch(PDOException $e)
+            {
+                throw new EhjwtDeleteRevocationRecordFailException('Ehjwt delete revocation record error: ' . $e->getMessage() , 0);
+            }
+        }
+        catch(EhjwtDeleteRevocationRecordFailException $e)
+        {
+            error_log($e->getMessage());
+        }
+    }
+
     private function makeRevocationTableDatabaseConnection()
     {
         return new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(
@@ -1175,21 +1209,25 @@ class EHJWT
         }
     }
 
-    private function deleteStandardClaims(string $standardClaimNamesCommaSeparated)
+    public function deleteStandardClaims(string $standardClaimNamesCommaSeparated)
     {
         $standardClaims = explode(',', $standardClaimNamesCommaSeparated);
         foreach ($standardClaims as $claimKey)
         {
-            $this->{$claimKey} = null;
+            if (isset($this->{$claimKey}) || is_null($this->{$claimKey})) {
+                unset($this->{$claimKey});
+            }
         }
     }
 
-    private function deleteCustomClaims(string $customClaimNamesCommaSeparated)
+    public function deleteCustomClaims(string $customClaimNamesCommaSeparated)
     {
         $customClaims = explode(',', $customClaimNamesCommaSeparated);
         foreach ($customClaims as $claimKey)
         {
-            $this->customClaims[$claimKey] = null;
+            if (isset($this->customClaims[$claimKey]) || is_null($this->customClaims[$claimKey])) {
+                unset($this->customClaims[$claimKey]);
+            }
         }
     }
 
