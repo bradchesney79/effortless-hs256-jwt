@@ -85,7 +85,7 @@ require_once 'path/to/Ehjwt.php';
 ```
 
 
-### Create a token:
+### Create a token, append/update claims, :
 
 ```php
 $jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword', 'IssuingWebsite', 'UserType');
@@ -110,28 +110,52 @@ $jwtToken->createToken();
 echo $jwtToken->getToken();
 ```
 
-### Read the token string:
+### Validate a token, read token claims, remove token claims:
 
 
+```php
+$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword', 'IssuingWebsite', 'UserType');
 
+$this->loadToken('fdsafdsafdsafdsa'.'fdsfdsafdsafdsa'.'fdsafdfadsfdsafdsa');
 
-### Validate a token:
+$this->unpackToken();
 
+if ($this->validateToken()) {
+    $sessionDataArray = $this->getTokenClaims();
+}
 
-### Revoke a token:
+if (isset($sessionDataArray['nbf']) || is_null($sessionDataArray['nbf'])) {
+    $this->deleteStandardClaims('nbf');
+}
 
+if (isset($sessionDataArray)['key'] || is_null($sessionDataArray['key'])) {
+    $this->deleteCustomClaims('key');    
+}
 
-### Read token claims:
+$this->clearClaims();
+```
 
+### Revoke a token, ban a user with an expiration, "permaban" a user:
 
-### Edit token claims:
+```php
+$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword', 'IssuingWebsite', 'UserType');
 
+$this->loadToken('fdsafdsafdsafdsa'.'fdsfdsafdsafdsa'.'fdsafdfadsfdsafdsa');
 
-### Append/update token claims:
+$this->unpackToken();
 
+if ($this->validateToken()) { // you're going to use this a lot-- just checking if the token is good
+    $this->revokeToken(); // no more access via this token, so mean
+}
 
-### Remove token claims:
+$this->banUser('1703462400'); // also, banned until Christmas
 
+$this->permabanUser(); // changed my mind, perma banned... until 12/04/292277026596 @ 3:30pm (UTC)
+
+$this->unbanUser(); // ...I had been drinking, imagined the whole thing. Sorry about that.
+```
+
+* banning a user isn't part of the JWT standard, but it was a feature I wanted to
 
 ## Step A - Test:
 
