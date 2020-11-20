@@ -88,12 +88,26 @@ require_once 'path/to/Ehjwt.php';
 ### Create a token:
 
 ```php
-$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword', 'The Issuing Website', 'User Type');
+$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword', 'IssuingWebsite', 'UserType');
 
-// you don't have to make the 'iss' property the issuing website... you don't have to make the 'aud' property the audience user type
+// the globally unique ID of this token and its series of potential reissues
+$jwtToken->addOrUpdateJtiProperty('1234567890'); // it is a string. nothing more, nothing less.
+// issued at
+$jwtToken->addOrUpdateIatProperty('305078400'); // my birthday...
+// when this incarnation of the jwt will die as a UTC timestamp
+$jwtToken->addOrUpdateExpProperty('1887525317'); // when the T-800 comes to kill Sarah Connor
+// the subject-- I use this for the publicly facing user ID
+$jwtToken->addOrUpdateSubProperty('bradchesney79@gmail.com');
+// ...I'll be honest. I don't use the not before field.
+// It isn't useful to me in my software designs.
+// But, it will throw an exception if you try to use it before allowed.
+// $jwtToken->addOrUpdateNbfProperty(0); // January 1st, 1970
+// One of many allowable custom, private claims-- but, beware, smaller the better.
+$jwtToken->addOrUpdateCustomClaim('key','value');
 
+$jwtToken->createToken();
 
-
+echo $jwtToken->getToken();
 ```
 
 ### Read the token string:

@@ -495,6 +495,7 @@ class EHJWT
 
     private function setStandardClaims()
     {
+        // ToDo: check for nulls and whatnot
         $this->standardClaims = ['aud' => $this->aud, 'exp' => $this->exp, 'iat' => $this->iat, 'iss' => $this->iss, 'jti' => $this->jti, 'nbf' => $this->nbf, 'sub' => $this->sub];
         return true;
     }
