@@ -1,6 +1,6 @@
 <phpunit
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/|version|/phpunit.xsd"
+   xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/7.5/phpunit.xsd"
    backupGlobals="true"
    backupStaticAttributes="false"
    beStrictAboutOutputDuringTests="false"
@@ -12,14 +12,13 @@
    convertNoticesToExceptions="true"
    convertWarningsToExceptions="true"
    forceCoversAnnotation="false"
-   testSuiteLoaderFile="./vendor/phpunit/phpunit/PHPUnit/Runner/StandardTestSuiteLoader.php"
    processIsolation="true"
    stopOnError="false"
    stopOnFailure="false"
    stopOnIncomplete="false"
    stopOnSkipped="false"
    stopOnRisky="false"
-
+   testSuiteLoaderFile="./vendor/phpunit/phpunit/PHPUnit/Runner/StandardTestSuiteLoader.php"
    timeoutForSmallTests="1"
    timeoutForMediumTests="10"
    timeoutForLargeTests="60"
@@ -27,7 +26,7 @@
 >
   <testsuites>
     <testsuite name="unit">
-      <directory suffix="ehjwtTest.php">tests/unit</directory>
+      <directory suffix=".php">tests/unit</directory>
     </testsuite>
   </testsuites>
   <filter>
@@ -40,17 +39,16 @@
     <ini name="display_errors" value="On" />
     <ini name="display_startup_errors" value="On" />
   </php>
-  <report>
-    <clover outputFile="build/clover.xml" />
-    <php outputFile="build/coverage.php" />
-    <html outputDirectory="build" lowUpperBound="1" highLowerBound="99" />
-    <text outputFile="coverage.txt" showUncoveredFiles="false" showOnlySummary="true" />
-  </report>
   <logging>
     <log type="coverage-clover" target="build/coverage.xml" />
-    <log type="coverage-html" target="build" lowUpperBound="1" highLowerBound="99" />
+    <log type="coverage-html" target="build" lowUpperBound="50" highLowerBound="85" />
     <log type="coverage-php" target="build/coverage.serialized" />
     <log type="coverage-text" target="php://stdout" showUncoveredFiles="false" />
   </logging>
-
+<!--  <report>-->
+<!--    <clover outputFile="build/clover.xml" />-->
+<!--    <html outputDirectory="build" lowUpperBound="1" highLowerBound="99" />-->
+<!--    <php outputFile="build/coverage.php" />-->
+<!--    <text outputFile="coverage.txt" showUncoveredFiles="false" showOnlySummary="true" />-->
+<!--  </report>-->
 </phpunit>
