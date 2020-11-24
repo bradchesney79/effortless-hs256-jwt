@@ -15,11 +15,12 @@ class ehjwtTest extends TestCase
     /**
      * Call protected/private method of a class.
      *
-     * @param object &$object    Instantiated object that we will run method on.
+     * @param object &$object Instantiated object that we will run method on.
      * @param string $methodName Method name to call
-     * @param array  $parameters Array of parameters to pass into method.
+     * @param array $parameters Array of parameters to pass into method.
      *
      * @return mixed Method return.
+     * @throws \ReflectionException
      */
     public function invokePrivateMethod(&$object, $methodName, array $parameters = array())
     {
@@ -33,15 +34,17 @@ class ehjwtTest extends TestCase
     /**
      * Get protected/private property of a class.
      *
-     * @param object &$object    Instantiated object that we will get property from
+     * @param object &$object Instantiated object that we will get property from
      * @param string $propertyName Property to get
      *
      * @return mixed Property return.
+     * @throws ReflectionException
      */
     public function getPrivateProperty(&$object, $propertyName)
     {
         $reflection = new \ReflectionClass(get_class($object));
         $property = $reflection->getProperty($propertyName);
+        var_dump($property);
         $property->setAccessible(true);
 
         //return $method->invokeArgs($object, $parameters);
@@ -70,29 +73,29 @@ class ehjwtTest extends TestCase
         $this->assertInstanceOf(EHJWT::class, $jwt);
     }
 
-//    public function testStandardClaimsAreAdded() {
-//        $jwt = new EHJWT('jwtSecret', '', 'DSNString','DBUser', 'DBPassword', 'BradChesney.com', 'user');
-//        $jwt->addOrUpdateIatProperty('10000');
-//        $jwt->addOrUpdateNbfProperty('0');
-//        $jwt->addOrUpdateSubProperty('1000');
-//        $jwt->addOrUpdateJtiProperty('1');
-//        $jwt->addOrUpdateExpProperty('1887525317');
-//
-//        $jwt->createToken();
-//        //var_dump($jwt);
-//        $standardClaims = $jwt->getTokenClaims();
-//
-//        //var_dump($standardClaims);
-//
-//        $this->assertEquals('BradChesney.com', $standardClaims['iss']);
-//        $this->assertEquals('user', $standardClaims['aud']);
-//        $this->assertEquals('10000', $standardClaims['iat']);
-//        $this->assertEquals('0', $standardClaims['nbf']);
-//        $this->assertEquals('1000', $standardClaims['sub']);
-//        $this->assertEquals('1', $standardClaims['jti']);
-//        $this->assertEquals('1887525317', $standardClaims['exp']);
-//
-//    }
+    public function testStandardClaimsAreAdded() {
+        $jwt = new EHJWT('jwtSecret', '', 'DSNString','DBUser', 'DBPassword', 'BradChesney.com', 'user');
+        $jwt->addOrUpdateIatProperty('10000');
+        $jwt->addOrUpdateNbfProperty('0');
+        $jwt->addOrUpdateSubProperty('1000');
+        $jwt->addOrUpdateJtiProperty('1');
+        $jwt->addOrUpdateExpProperty('1887525317');
+
+        $jwt->createToken();
+        //var_dump($jwt);
+        var_dump($jwt->getTokenClaims());
+        $standardClaims = $jwt->getTokenClaims();
+
+        //var_dump($standardClaims);
+
+        $this->assertEquals('BradChesney.com', $standardClaims['iss']);
+        $this->assertEquals('user', $standardClaims['aud']);
+        $this->assertEquals('10000', $standardClaims['iat']);
+        $this->assertEquals('0', $standardClaims['nbf']);
+        $this->assertEquals('1000', $standardClaims['sub']);
+        $this->assertEquals('1', $standardClaims['jti']);
+        $this->assertEquals('1887525317', $standardClaims['exp']);
+    }
 
 //
 //    public function testCreateToken()
