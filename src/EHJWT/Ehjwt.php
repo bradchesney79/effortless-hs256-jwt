@@ -587,6 +587,8 @@ class EHJWT
 
     private function jsonEncodeClaims()
     {
+        var_dump('this->tokenClaims');
+        var_dump($this->tokenClaims);
         return json_encode($this->tokenClaims, JSON_FORCE_OBJECT);
     }
 
@@ -602,8 +604,10 @@ class EHJWT
         // header as immutable constant
         // set the properties
 
+        var_dump($this);
         $this->setTokenClaims();
 
+        var_dump($this);
         // convert from arrays to JSON objects
         $jsonHeader = $this->jsonEncodeHeader();
 
@@ -766,9 +770,12 @@ class EHJWT
 
     private function decodeTokenPayload($jwtPayload)
     {
+        var_dump('jwtPayload');
+        var_dump($jwtPayload);
 
         $decodedPayload = json_decode($this->base64UrlDecode($jwtPayload) , true);
-
+        var_dump('decoded jwtPayload');
+        var_dump($this->base64UrlDecode($jwtPayload));
         switch (json_last_error())
         {
             case JSON_ERROR_NONE:
@@ -991,10 +998,10 @@ class EHJWT
     // From here out claims are equal, standard and custom have parity
     public function getTokenClaims()
     {
-
-        $this->unpackToken($this->token);
-
         $standardClaims = ['iss' => $this->iss, 'sub' => $this->sub, 'aud' => $this->aud, 'exp' => $this->exp, 'nbf' => $this->nbf, 'iat' => $this->iat, 'jti' => $this->jti];
+
+        //var_dump('standardClaims:');
+        //var_dump($standardClaims);
 
         if ($this->customClaims === null)
         {
@@ -1225,6 +1232,11 @@ class EHJWT
         }
     }
 
+    // ToDo: Provide access to a list of banned users
+    public function getBannedUsers() {
+        return true;
+    }
+
     public function deleteStandardClaims(string $standardClaimNamesCommaSeparated)
     {
         $standardClaims = explode(',', $standardClaimNamesCommaSeparated);
@@ -1253,8 +1265,11 @@ class EHJWT
         {
             $this->clearClaims();
         }
-
+        //var_dump('getTokenParts');
+        //var_dump($this->getTokenParts());
         $tokenParts = $this->getTokenParts();
+
+        var_dump($this->decodeTokenPayload($tokenParts[1]));
 
         $tokenClaims = $this->decodeTokenPayload($tokenParts[1]);
 
