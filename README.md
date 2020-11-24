@@ -172,8 +172,10 @@ vendor/bin/phpunit --coverage-clover /tmp/clover/clover.xml --coverage-html /tmp
 ## Step B - Count Lines of Code:
 
 ```bash
-cloc --exclude-dir=vendor .
+cloc --exclude-dir=vendor,build .
 ```
+
+11/2020 1,800
 
 ToDo:
 
