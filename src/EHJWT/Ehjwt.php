@@ -140,17 +140,19 @@ class EHJWT
 
     private function checkDisallowArguments()
     {
-        if (getenv('ESJWT_DISALLOW_ARGUMENTS') == 'true')
+        if(isset($this->config['disallowArguments'])) {
+            $configDisallowArguments = $this->config['disallowArguments'];
+        }
+        else {
+            $configDisallowArguments = 'false';
+        }
+
+        if (getenv('ESJWT_DISALLOW_ARGUMENTS') == 'true' || $configDisallowArguments == 'true')
         {
-            $this->enforceDisallowArguments = 'true';
+            $this->enforceDisallowArguments = true;
             return true;
         }
-        if ($this->presenceOfConfigFile() && $this->config['disallowArguments'] == 'true')
-        {
-            $this->enforceDisallowArguments = 'true';
-            return true;
-        }
-        $this->enforceDisallowArguments = 'false';
+        $this->enforceDisallowArguments = false;
         return false;
     }
 
@@ -420,8 +422,6 @@ class EHJWT
 
         $this->checkEnforceUsingEnvVars();
 
-        // var_dump('==========================================================');
-
         if ($this->enforceUsingEnvVars)
         {
             trigger_error('Note: EHJWT is set to bypass config files and constructor arguments', 'E_USER_NOTICE');
@@ -434,10 +434,10 @@ class EHJWT
             }
             if ($this->checkDisallowArguments())
             {
-                $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
+                trigger_error('Note EHJWT is set to bypass constructor arguments', 'E_USER_NOTICE');
             }
             else {
-                trigger_error('Note EHJWT is set to bypass constructor arguments', 'E_USER_NOTICE');
+                $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
             }
         }
         return true;
@@ -586,8 +586,6 @@ class EHJWT
 
     private function jsonEncodeClaims()
     {
-        var_dump('this->tokenClaims');
-        var_dump($this->tokenClaims);
         return json_encode($this->tokenClaims, JSON_FORCE_OBJECT);
     }
 
@@ -603,10 +601,8 @@ class EHJWT
         // header as immutable constant
         // set the properties
 
-        //var_dump($this);
         $this->setTokenClaims();
 
-        //var_dump($this);
         // convert from arrays to JSON objects
         // $jsonHeader = $this->jsonEncodeHeader();
         // $jsonHeader = '{"alg":"HS256","typ":"JWT"}';
@@ -652,7 +648,7 @@ class EHJWT
         return $this->getToken();
     }
 
-    private function loadToken(string $tokenString)
+    public function loadToken(string $tokenString)
     {
         if (is_string($tokenString))
         {
@@ -697,7 +693,6 @@ class EHJWT
 
         if (3 !== count($array))
         {
-            //var_dump('segments');
             // 'Incorrect quantity of segments'
             return false;
         }
@@ -754,7 +749,6 @@ class EHJWT
         {
             if ($error !== '')
             {
-                //var_dump('undecodable header');
                 // 'Header does not decode'
                 throw new TokenValidationException($error, 0);
             }
@@ -772,12 +766,7 @@ class EHJWT
 
     private function decodeTokenPayload($jwtPayload)
     {
-        var_dump('jwtPayload');
-        var_dump($jwtPayload);
-
         $decodedPayload = json_decode($this->base64UrlDecode($jwtPayload) , true);
-        var_dump('decoded jwtPayload');
-        var_dump($this->base64UrlDecode($jwtPayload));
         switch (json_last_error())
         {
             case JSON_ERROR_NONE:
@@ -817,7 +806,6 @@ class EHJWT
         {
             if ($error !== '')
             {
-                //var_dump('undecodable payload');
                 // 'Payload does not decode'
                 throw new TokenValidationException($error, 0);
             }
@@ -840,10 +828,8 @@ class EHJWT
         // use this to validate
         $tokenParts = $this->getTokenParts();
 
-        //var_dump('header');
         $unpackedTokenHeader = $this->decodeTokenHeader($tokenParts[0]);
 
-        //var_dump('payload');
         $unpackedTokenPayload = $this->decodeTokenPayload($tokenParts[1]);
 
         // set object properties with header & payload values
@@ -858,7 +844,6 @@ class EHJWT
         {
             if ($unpackedTokenHeader['alg'] !== 'HS256')
             {
-                //var_dump('algorithm');
                 // 'Wrong algorithm'
                 throw new EhjwtInvalidTokenException('Encryption algorithm tampered with', 0);
             }
@@ -878,7 +863,6 @@ class EHJWT
         {
             if (($utcTimeNow - $expiryTime) > 0)
             {
-                //var_dump('expired');
                 // 'Expired (exp)'
                 throw new EhjwtInvalidTokenException('Token is expired', 0);
 
@@ -899,7 +883,6 @@ class EHJWT
             {
                 if ($notBeforeTime > $utcTimeNow)
                 {
-                    //var_dump('too early');
                     // 'Too early for not before(nbf) value'
                     throw new EhjwtInvalidTokenException('Token issued before nbf header allows', 0);
                 }
@@ -954,14 +937,12 @@ class EHJWT
                 // any records where jti is 0
                 if ($row['jti'] == 0 && $row['exp'] > $utcTimeNow)
                 {
-                    //var_dump('banned');
                     // user is under an unexpired ban condition
                     return false;
                 }
 
                 if ($row['jti'] == $unpackedTokenPayload['jti'])
                 {
-                    //var_dump('revoked');
                     // token is revoked
                     return false;
                 }
@@ -1001,9 +982,6 @@ class EHJWT
     public function getTokenClaims()
     {
         $standardClaims = ['iss' => $this->iss, 'sub' => $this->sub, 'aud' => $this->aud, 'exp' => $this->exp, 'nbf' => $this->nbf, 'iat' => $this->iat, 'jti' => $this->jti];
-
-        //var_dump('standardClaims:');
-        //var_dump($standardClaims);
 
         if ($this->customClaims === null)
         {
@@ -1133,7 +1111,6 @@ class EHJWT
 
     private function writeRecordToRevocationTable(string $exp, $ban = false)
     {
-        // var_dump('writeRecordToRevocationTable()');
         try
         {
             try
@@ -1173,7 +1150,6 @@ class EHJWT
 
     private function deleteRecordsFromRevocationTable()
     {
-        // var_dump('deleteRecordToRevocationTable()');
         try
         {
             try
@@ -1268,11 +1244,8 @@ class EHJWT
         {
             $this->clearClaims();
         }
-        //var_dump('getTokenParts');
-        //var_dump($this->getTokenParts());
-        $tokenParts = $this->getTokenParts();
 
-        var_dump($this->decodeTokenPayload($tokenParts[1]));
+        $tokenParts = $this->getTokenParts();
 
         $tokenClaims = $this->decodeTokenPayload($tokenParts[1]);
 
