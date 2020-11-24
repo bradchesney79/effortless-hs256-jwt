@@ -83,7 +83,7 @@ class ehjwtTest extends TestCase
 
         $jwt->createToken();
         //var_dump($jwt);
-        var_dump($jwt->getTokenClaims());
+        //var_dump($jwt->getTokenClaims());
         $standardClaims = $jwt->getTokenClaims();
 
         //var_dump($standardClaims);
