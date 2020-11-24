@@ -27,7 +27,6 @@ class ehjwtTest extends TestCase
         $reflection = new \ReflectionClass(get_class($object));
         $method = $reflection->getMethod($methodName);
         $method->setAccessible(true);
-
         return $method->invokeArgs($object, $parameters);
     }
 
@@ -44,10 +43,7 @@ class ehjwtTest extends TestCase
     {
         $reflection = new \ReflectionClass(get_class($object));
         $property = $reflection->getProperty($propertyName);
-        var_dump($property);
         $property->setAccessible(true);
-
-        //return $method->invokeArgs($object, $parameters);
         return $property->getValue($object);
     }
 
@@ -73,7 +69,26 @@ class ehjwtTest extends TestCase
         $this->assertInstanceOf(EHJWT::class, $jwt);
     }
 
-    public function testStandardClaimsAreAdded() {
+    public function testArgumentSettings ()
+    {
+        $jwt = new EHJWT('jwtSecret', '', 'DSNString','DBUser', 'DBPassword', 'BradChesney.com', 'user');
+
+        $jwt->createToken();
+
+        $secret = $this->getPrivateProperty($jwt, 'jwtSecret');
+        $dsnString = $this->getPrivateProperty($jwt, 'dsn');
+        $dbUser = $this->getPrivateProperty($jwt, 'dbUser');
+        $dbPassword = $this->getPrivateProperty($jwt, 'dbPassword');
+
+
+
+        $this->assertEquals('jwtSecret', $secret);
+        $this->assertEquals('DSNString', $dsnString);
+        $this->assertEquals('dbUser', $dbUser);
+        $this->assertEquals('DBPassword', $dbPassword);
+    }
+
+    public function testClaimsAreAdded() {
         $jwt = new EHJWT('jwtSecret', '', 'DSNString','DBUser', 'DBPassword', 'BradChesney.com', 'user');
         $jwt->addOrUpdateIatProperty('10000');
         $jwt->addOrUpdateNbfProperty('0');
@@ -81,45 +96,76 @@ class ehjwtTest extends TestCase
         $jwt->addOrUpdateJtiProperty('1');
         $jwt->addOrUpdateExpProperty('1887525317');
 
+        $jwt->addOrUpdateCustomClaim('age', '39');
+        $jwt->addOrUpdateCustomClaim('sex', 'male');
+        $jwt->addOrUpdateCustomClaim('location', 'Davenport, Iowa');
+
         $jwt->createToken();
-        //var_dump($jwt);
-        //var_dump($jwt->getTokenClaims());
-        $standardClaims = $jwt->getTokenClaims();
+        $claims = $jwt->getTokenClaims();
 
-        //var_dump($standardClaims);
+        $this->assertEquals('BradChesney.com', $claims['iss']);
+        $this->assertEquals('user', $claims['aud']);
+        $this->assertEquals('10000', $claims['iat']);
+        $this->assertEquals('0', $claims['nbf']);
+        $this->assertEquals('1000', $claims['sub']);
+        $this->assertEquals('1', $claims['jti']);
+        $this->assertEquals('1887525317', $claims['exp']);
 
-        $this->assertEquals('BradChesney.com', $standardClaims['iss']);
-        $this->assertEquals('user', $standardClaims['aud']);
-        $this->assertEquals('10000', $standardClaims['iat']);
-        $this->assertEquals('0', $standardClaims['nbf']);
-        $this->assertEquals('1000', $standardClaims['sub']);
-        $this->assertEquals('1', $standardClaims['jti']);
-        $this->assertEquals('1887525317', $standardClaims['exp']);
+        $this->assertEquals('39', $claims['age']);
+        $this->assertEquals('male', $claims['sex']);
+        $this->assertEquals('Davenport, Iowa', $claims['location']);
     }
 
-//
+    public function testValidateToken()
+    {
+        $jwt = new EHJWT('jwtSecret', '', 'DSNString', 'DBUser', 'DBPassword', 'BradChesney.com', 'user');
+        $jwt->addOrUpdateIatProperty('10000');
+        $jwt->addOrUpdateNbfProperty('0');
+        $jwt->addOrUpdateSubProperty('1000');
+        $jwt->addOrUpdateJtiProperty('1');
+        $jwt->addOrUpdateExpProperty('1887525317');
+
+        $jwt->addOrUpdateCustomClaim('age', '39');
+        $jwt->addOrUpdateCustomClaim('sex', 'male');
+        $jwt->addOrUpdateCustomClaim('location', 'Davenport, Iowa');
+
+        $jwt->createToken();
+
+
+        $tokenString = $jwt->getToken();
+
+        unset($jwt);
+
+        $jwt2 = new EHJWT('jwtSecret', '', 'DSNString', 'DBUser', 'DBPassword', 'BradChesney.com', 'user');
+        $jwt2->loadToken($tokenString);
+        $itVerks = $jwt2->validateToken();
+        $this->assertEquals(true, $itVerks);
+    }
 //    public function testCreateToken()
 //    {
-//        // var_dump('testCreateToken()');
-//        $secret = 'secret';
+//        $jwt = new EHJWT('jwtSecret', '', 'DSNString','DBUser', 'DBPassword', 'BradChesney.com', 'user');
+//        $jwt->addOrUpdateIatProperty('10000');
+//        $jwt->addOrUpdateNbfProperty('0');
+//        $jwt->addOrUpdateSubProperty('1000');
+//        $jwt->addOrUpdateJtiProperty('1');
+//        $jwt->addOrUpdateExpProperty('1887525317');
 //
-//        $jwt = new Ehjwt($secret);
+//        $jwt->createToken();
 //
-//        $now = time();
-//        $expires = time() + 30 * 60;
+//        $jwt->addOrUpdateCustomClaim('age', '39');
+//        $jwt->addOrUpdateCustomClaim('sex', 'male');
+//        $jwt->addOrUpdateCustomClaim('location', 'Davenport, Iowa');
+//    }
 //
-//        /*
-//                iss: issuer, the website that issued the token
-//                sub: subject, the id of the entity being granted the token
-//                    (int has an unsigned, numeric limit of 4294967295)
-//                    (bigint has an unsigned, numeric limit of 18446744073709551615)
-//                    (unix epoch as of "now" 1544897945)
-//                aud: audience, the users of the token-- generally a url or string
-//                exp: expires, the UTC UNIX epoch time stamp of when the token is no longer valid
-//                nbf: not before, the UTC UNIX epoch time stamp of when the token becomes valid
-//                iat: issued at, the UTC UNIX epoch time stamp of when the token was issued
-//                jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation
-//        */
+//            //var_dump($standardClaims);
+//
+//$this->assertEquals('BradChesney.com', $standardClaims['iss']);
+//$this->assertEquals('user', $standardClaims['aud']);
+//$this->assertEquals('10000', $standardClaims['iat']);
+//$this->assertEquals('0', $standardClaims['nbf']);
+//$this->assertEquals('1000', $standardClaims['sub']);
+//$this->assertEquals('1', $standardClaims['jti']);
+//$this->assertEquals('1887525317', $standardClaims['exp']);
 //
 //        $standardClaims = array(
 //            'iss'=>'rustbeltrebellion.com',
