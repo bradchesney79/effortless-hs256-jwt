@@ -164,6 +164,8 @@ Ensure that the phpdbg and xdebug extensions are avaialble to make developer lif
 Run the tests with the PHPUnit installed in the dev dependencies
 
 ```bash
+export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_port=9000 remote_host=127.0.0.1 remote_connect_back=0"
+
 vendor/bin/phpunit --coverage-clover /tmp/clover/clover.xml --coverage-html /tmp/clover
 ```
 
@@ -185,6 +187,8 @@ ToDo:
 
 - Use https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df
   ...as the basis for instructions on how to functionally use this library beyond syntax and logical flow
+
+- Convert any error_log lines to trigger_error where more beneficial
 
 
 Caveats:
