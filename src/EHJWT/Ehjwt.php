@@ -116,19 +116,19 @@ class EHJWT
      */
     public object $error;
 
-    private const jwtHeader = array(
-        'alg' => 'HS256',
-        'typ' => 'JWT'
-    );
+//    private const jwtHeader = array(
+//        'alg' => 'HS256',
+//        'typ' => 'JWT'
+//    );
 
-    private string $enforceUsingEnvVars = 'false';
+    private bool $enforceUsingEnvVars = false;
 
-    private string $enforceDisallowArguments = 'false';
+    private bool $enforceDisallowArguments = false;
 
     // methods
     private function checkEnforceUsingEnvVars()
     {
-        if (getenv('ESJWT_USE_ENV_VARS') == 'true')
+        if (getenv('ESJWT_USE_ENV_VARS') == true)
         {
             $this->enforceUsingEnvVars = true;
             return true;
@@ -170,8 +170,9 @@ class EHJWT
         if (strlen($dsn) > 0)
         {
             $this->dsn = $dsn;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setDbUserFromEnvVar()
@@ -180,8 +181,9 @@ class EHJWT
         if (strlen($dbUser) > 0)
         {
             $this->dbUser = $dbUser;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setDbPasswordFromEnvVar()
@@ -190,8 +192,9 @@ class EHJWT
         if (strlen($dbPassword) > 0)
         {
             $this->dbPassword = $dbPassword;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setJwtSecretFromEnvVar()
@@ -200,8 +203,9 @@ class EHJWT
         if (strlen($jwtSecret) > 0)
         {
             $this->jwtSecret = $jwtSecret;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setIssFromEnvVar()
@@ -210,8 +214,9 @@ class EHJWT
         if (strlen($iss) > 0)
         {
             $this->iss = $iss;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setAudFromEnvVar()
@@ -220,8 +225,9 @@ class EHJWT
         if (strlen($aud) > 0)
         {
             $this->aud = $aud;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setPropertiesFromEnvVars()
@@ -235,10 +241,9 @@ class EHJWT
         return true;
     }
 
-    private function setConfigFileProperty(string $configFileWithPath)
+    private function setConfigFileProperties(string $configFileWithPath = '')
     {
         $this->configFile = '';
-        $configFile = $configFileWithPath;
 
         if (strlen($configFileWithPath) < 1)
         {
@@ -247,6 +252,8 @@ class EHJWT
 
         if (file_exists($configFile)) {
             $this->configFile = $configFile;
+            $this->loadConfigFile();
+            $this->setPropertiesFromConfigFile();
             return true;
         }
         return false;
@@ -254,10 +261,8 @@ class EHJWT
 
     private function loadConfigFile()
     {
-        if (file_exists($this->configFile))
-        {
-            $this->config = require $this->configFile;
-        }
+        $this->config = require $this->configFile;
+        return true;
     }
 
     private function setDsnFromConfig()
@@ -267,7 +272,6 @@ class EHJWT
             $this->dsn = $dsn;
             return true;
         }
-
         return false;
     }
 
@@ -297,8 +301,9 @@ class EHJWT
         if (strlen($jwtSecret) > 0)
         {
             $this->jwtSecret = $jwtSecret;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setIssFromConfig()
@@ -307,8 +312,9 @@ class EHJWT
         if (strlen($iss) > 0)
         {
             $this->iss = $iss;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setAudFromConfig()
@@ -317,8 +323,9 @@ class EHJWT
         if (strlen($aud) > 0)
         {
             $this->aud = $aud;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setDisallowArgumentsFromConfig()
@@ -359,8 +366,9 @@ class EHJWT
         if (strlen($dsn) > 0)
         {
             $this->dsn = $dsn;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setDbUserFromArguments(string $dbUser)
@@ -368,8 +376,9 @@ class EHJWT
         if (strlen($dbUser) > 0)
         {
             $this->dbUser = $dbUser;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setDbPasswordFromArguments(string $dbPassword)
@@ -377,8 +386,9 @@ class EHJWT
         if (strlen($dbPassword) > 0)
         {
             $this->dbPassword = $dbPassword;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setJwtSecretFromArguments(string $jwtSecret)
@@ -386,8 +396,9 @@ class EHJWT
         if (strlen($jwtSecret) > 0)
         {
             $this->jwtSecret = $jwtSecret;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setIssFromArguments(string $iss)
@@ -395,8 +406,9 @@ class EHJWT
         if (strlen($iss) > 0)
         {
             $this->iss = $iss;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setAudFromArguments(string $aud)
@@ -404,8 +416,9 @@ class EHJWT
         if (strlen($aud) > 0)
         {
             $this->aud = $aud;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private function setPropertiesFromArguments(string $secret = '', string $dsn = '', string $dbUser = '', string $dbPassword = '', string $iss = '', string $aud = '')
@@ -433,8 +446,7 @@ class EHJWT
         }
         else
         {
-            $this->setConfigFileProperty($file);
-            $this->loadConfigFile();
+            $this->setConfigFileProperties($file);
             $this->setPropertiesFromConfigFile();
             if ($this->checkDisallowArguments())
             {
@@ -580,10 +592,10 @@ class EHJWT
 
 
 
-    private function jsonEncodeHeader()
-    {
-        return json_encode(self::jwtHeader, JSON_FORCE_OBJECT);
-    }
+    //private function jsonEncodeHeader()
+    //{
+    //    return json_encode($this->jwtHeader, JSON_FORCE_OBJECT);
+    //}
 
     private function jsonEncodeClaims()
     {
@@ -604,17 +616,20 @@ class EHJWT
         // header as immutable constant
         // set the properties
 
-        var_dump($this);
+        //var_dump($this);
         $this->setTokenClaims();
 
-        var_dump($this);
+        //var_dump($this);
         // convert from arrays to JSON objects
-        $jsonHeader = $this->jsonEncodeHeader();
+        // $jsonHeader = $this->jsonEncodeHeader();
+        // $jsonHeader = '{"alg":"HS256","typ":"JWT"}';
 
         $jsonClaims = $this->jsonEncodeClaims();
 
         // encode the header and claims to base64url string
-        $base64UrlHeader = $this->base64UrlEncode($jsonHeader);
+        // $base64UrlHeader = $this->base64UrlEncode($jsonHeader);
+        // The hash is always the same... don't bother computing it.
+        $base64UrlHeader = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
 
         $base64UrlClaims = $this->base64UrlEncode($jsonClaims);
 
@@ -1114,12 +1129,13 @@ class EHJWT
             }
         }
 
+        $standardClaimKeys = array('aud', 'exp', 'iat', 'iss', 'jti', 'nbf', 'sub');
         // standard claims set after to make custom claims the priority value, layered security strategy
-        foreach ($this->standardClaims as $key => $value)
+        foreach ($standardClaimKeys as $key)
         {
-            if (strlen($value))
+            if (strlen($this->$key) > 0)
             {
-                $this->tokenClaims[$key] = $value;
+                $this->tokenClaims[$key] = $this->$key;
             }
         }
 
