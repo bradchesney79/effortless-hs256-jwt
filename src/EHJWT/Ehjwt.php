@@ -241,30 +241,6 @@ class EHJWT
         return true;
     }
 
-    private function setConfigFileProperties(string $configFileWithPath = '')
-    {
-        $this->configFile = '';
-
-        if (strlen($configFileWithPath) < 1)
-        {
-            $configFile = __DIR__ . '/../config/ehjwt-conf.php';
-        }
-
-        if (file_exists($configFile)) {
-            $this->configFile = $configFile;
-            $this->loadConfigFile();
-            $this->setPropertiesFromConfigFile();
-            return true;
-        }
-        return false;
-    }
-
-    private function loadConfigFile()
-    {
-        $this->config = require $this->configFile;
-        return true;
-    }
-
     private function setDsnFromConfig()
     {
         $dsn = $this->config['dsn'];
@@ -339,8 +315,15 @@ class EHJWT
         return false;
     }
 
-    private function presenceOfConfigFile() {
-        if (strlen($this->configFile > 0)) {
+    private function presenceOfConfigFile(string $configFileWithPath = '') {
+        if (strlen($configFileWithPath) < 1)
+        {
+            $configFileWithPath = __DIR__ . '/../config/ehjwt-conf.php';
+        }
+
+        if (file_exists($configFileWithPath)) {
+
+            $this->configFile = $configFileWithPath;
             return true;
         }
         return false;
@@ -348,17 +331,15 @@ class EHJWT
 
     private function setPropertiesFromConfigFile()
     {
-        if ($this->presenceOfConfigFile()) {
-            $this->setDsnFromConfig();
-            $this->setDbUserFromConfig();
-            $this->setDbPasswordFromConfig();
-            $this->setJwtSecretFromConfig();
-            $this->setIssFromConfig();
-            $this->setAudFromConfig();
-            $this->setDisallowArgumentsFromConfig();
-            return true;
-        }
-        return false;
+        $this->config = require $this->configFile;
+        $this->setDsnFromConfig();
+        $this->setDbUserFromConfig();
+        $this->setDbPasswordFromConfig();
+        $this->setJwtSecretFromConfig();
+        $this->setIssFromConfig();
+        $this->setAudFromConfig();
+        $this->setDisallowArgumentsFromConfig();
+        return true;
     }
 
     private function setDsnFromArguments(string $dsn)
@@ -440,17 +421,23 @@ class EHJWT
         $this->checkEnforceUsingEnvVars();
 
         // var_dump('==========================================================');
+
         if ($this->enforceUsingEnvVars)
         {
-            return true;
+            trigger_error('Note: EHJWT is set to bypass config files and constructor arguments', 'E_USER_NOTICE');
         }
         else
         {
-            $this->setConfigFileProperties($file);
-            $this->setPropertiesFromConfigFile();
+            // presence of config file
+            if ($this->presenceOfConfigFile($file)) {
+                $this->setPropertiesFromConfigFile();
+            }
             if ($this->checkDisallowArguments())
             {
                 $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
+            }
+            else {
+                trigger_error('Note EHJWT is set to bypass constructor arguments', 'E_USER_NOTICE');
             }
         }
         return true;
