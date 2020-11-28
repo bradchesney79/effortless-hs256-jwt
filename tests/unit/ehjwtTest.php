@@ -30,32 +30,32 @@ class ehjwtTest extends TestCase
         return $method->invokeArgs($object, $parameters);
     }
 
-    /**
-     * Get protected/private property of a class.
-     *
-     * @param object &$object Instantiated object that we will get property from
-     * @param string $propertyName Property to get
-     *
-     * @return mixed Property return.
-     * @throws ReflectionException
-     */
-    public function getPrivateProperty(&$object, $propertyName)
-    {
-        $reflection = new \ReflectionClass(get_class($object));
-        $property = $reflection->getProperty($propertyName);
-        $property->setAccessible(true);
-        return $property->getValue($object);
-    }
+//    /**
+//     * Get protected/private property of a class.
+//     *
+//     * @param object &$object Instantiated object that we will get property from
+//     * @param string $propertyName Property to get
+//     *
+//     * @return mixed Property return.
+//     * @throws ReflectionException
+//     */
+//    public function getPrivateProperty(&$object, $propertyName)
+//    {
+//        $reflection = new \ReflectionClass(get_class($object));
+//        $property = $reflection->getProperty($propertyName);
+//        $property->setAccessible(true);
+//        return $property->getValue($object);
+//    }
 
      /**
      * @coversNothing
      */
     public function testAssertTrueIsTrue()
     {
-        // var_dump('testAssertTrueIsTrue()');
         // Even if the rest of the world is exploding,
         // this test should pass.
-        // You should at least have one passing test.
+        // You should have at least this one passing test
+        // ...when testing is configured correctly.
         $this->assertTrue(true);
     }
 
@@ -69,23 +69,13 @@ class ehjwtTest extends TestCase
         $this->assertInstanceOf(EHJWT::class, $jwt);
     }
 
-    public function testArgumentSettings ()
+    public function testDsnArgumentSettings ()
     {
         $jwt = new EHJWT('jwtSecret', '', 'DSNString','DBUser', 'DBPassword', 'BradChesney.com', 'user');
 
         $jwt->createToken();
-
-        $secret = $this->getPrivateProperty($jwt, 'jwtSecret');
-        $dsnString = $this->getPrivateProperty($jwt, 'dsn');
-        $dbUser = $this->getPrivateProperty($jwt, 'dbUser');
-        $dbPassword = $this->getPrivateProperty($jwt, 'dbPassword');
-
-
-
-        $this->assertEquals('jwtSecret', $secret);
-        $this->assertEquals('DSNString', $dsnString);
-        $this->assertEquals('dbUser', $dbUser);
-        $this->assertEquals('DBPassword', $dbPassword);
+        $expectedToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1c2VyIiwiaXNzIjoiQnJhZENoZXNuZXkuY29tIn0.R3NfZXdBdjhaQW1xMkpSc3E1d3p4NnE2M2F6WW55WFd4UGlrdDJtMUpPcw';
+        $this->assertEquals($expectedToken, $jwt->getToken());
     }
 
     public function testClaimsAreAdded() {
@@ -118,7 +108,7 @@ class ehjwtTest extends TestCase
 
     public function testValidateToken()
     {
-        $jwt = new EHJWT('jwtSecret', '', 'DSNString', 'DBUser', 'DBPassword', 'BradChesney.com', 'user');
+        $jwt = new EHJWT('jwtSecret', '', 'mysql:host=localhost;dbname=EHJWT', 'brad', 'password', 'BradChesney.com', 'user');
         $jwt->addOrUpdateIatProperty('10000');
         $jwt->addOrUpdateNbfProperty('0');
         $jwt->addOrUpdateSubProperty('1000');
@@ -131,16 +121,32 @@ class ehjwtTest extends TestCase
 
         $jwt->createToken();
 
-
         $tokenString = $jwt->getToken();
 
         unset($jwt);
 
-        $jwt2 = new EHJWT('jwtSecret', '', 'DSNString', 'DBUser', 'DBPassword', 'BradChesney.com', 'user');
+        $jwt2 = new EHJWT('jwtSecret', '', 'mysql:host=localhost;dbname=EHJWT', 'brad', 'password', 'BradChesney.com', 'user');
         $jwt2->loadToken($tokenString);
         $itVerks = $jwt2->validateToken();
         $this->assertEquals(true, $itVerks);
     }
+
+    public function testLoadingConfigFile() {
+
+        $this->assertFileNotExists('custom-config.conf');
+        if(!file_exists('custom-config.conf')) {
+            // create custom config file
+            $customConfigFile = fopen("custom-config.conf", "w");
+            $txt = "Jane Doe\n";
+            fwrite($customConfigFile, $txt);
+            fclose($customConfigFile);
+
+
+            // delete custom config file
+            unlink(custom-config.conf);
+        }
+    }
+
 //    public function testCreateToken()
 //    {
 //        $jwt = new EHJWT('jwtSecret', '', 'DSNString','DBUser', 'DBPassword', 'BradChesney.com', 'user');
