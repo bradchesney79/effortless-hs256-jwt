@@ -17,10 +17,12 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.14",
         "phpunit/php-code-coverage": "^6.1",
+        "phpmd/phpmd" : "@stable",
         "phpunit/phpunit": "^7"
     },
     "suggest": {
-        "ext-phpdbg": "^0"
+        "ext-phpdbg": "^0",
+        "ext-mysql": "*"
     },
     "autoload": {
         "psr-4": {
