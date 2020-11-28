@@ -102,12 +102,19 @@ class EHJWT
      */
     protected string $configFile = '';
 
+//    /**
+//     * The config data.
+//     *
+//     * @var array
+//     */
+//    protected array $config = [];
+
     /**
-     * The config data.
+     *  The flag to disallow __constructor arguments
      *
-     * @var array
+     * @var string
      */
-    protected array $config = [];
+    private string $disallowArguments = 'false';
 
     /**
      * Error Object
@@ -140,11 +147,10 @@ class EHJWT
 
     private function checkDisallowArguments()
     {
-        if(isset($this->config['disallowArguments'])) {
-            $configDisallowArguments = $this->config['disallowArguments'];
-        }
-        else {
-            $configDisallowArguments = 'false';
+
+        $configDisallowArguments = 'false';
+        if(isset($this->disallowArguments)) {
+            $configDisallowArguments = $this->disallowArguments;
         }
 
         if (getenv('ESJWT_DISALLOW_ARGUMENTS') == 'true' || $configDisallowArguments == 'true')
@@ -308,7 +314,7 @@ class EHJWT
 
     private function setDisallowArgumentsFromConfig()
     {
-        $disallowArguments = $this->config['disallowArguments'];
+        $disallowArguments = $this->disallowArguments;
         if (strlen($disallowArguments) > 0 && $disallowArguments == 'true')
         {
             $this->enforceDisallowArguments = true;
@@ -369,6 +375,7 @@ class EHJWT
         if (strlen($dbPassword) > 0)
         {
             $this->dbPassword = $dbPassword;
+            //$this->config['dbPassword'] = $dbPassword;
             return true;
         }
         return false;
@@ -519,8 +526,7 @@ class EHJWT
     {
         // listen, your users shouldn't set your token keys-- you should set the token keys
         // no validation, be smart
-        if (strlen($key) > 0 && $value != null)
-        {
+        if (strlen($key) > 0 && $value != null) {
             if (in_array($key, array(
                 'iss',
                 'sub',
@@ -529,24 +535,19 @@ class EHJWT
                 'nbf',
                 'iat',
                 'jti'
-            ) , true))
-            {
+            ), true)) {
                 return false;
             }
-            else
-            {
-                try {
-                    if (gettype($value) == $requiredType || $requiredType === 'mixed') {
-                        $this->customClaims[$key] = $value;
-                        return true;
-                    }
-                    else {
-                        throw new EhjwtCustomClaimsInputStringException('Specified custom claims required type mismatch', 0);
-                    }
+
+
+            try {
+                if (gettype($value) == $requiredType || $requiredType === 'mixed') {
+                    $this->customClaims[$key] = $value;
+                    return true;
                 }
-                catch (EhjwtCustomClaimsInputStringException $e) {
-                    error_log($e->getMessage());
-                }
+                throw new EhjwtCustomClaimsInputStringException('Specified custom claims required type mismatch', 0);
+            } catch (EhjwtCustomClaimsInputStringException $e) {
+                error_log($e->getMessage());
             }
         }
         return false;
@@ -568,11 +569,8 @@ class EHJWT
             {
                 return false;
             }
-            else
-            {
-                unset($this->customClaims[$key]);
-                return true;
-            }
+            unset($this->customClaims[$key]);
+            return true;
         }
         return false;
     }
@@ -747,15 +745,12 @@ class EHJWT
 
         try
         {
-            if ($error !== '')
-            {
-                // 'Header does not decode'
-                throw new TokenValidationException($error, 0);
-            }
-            else
+            if ($error == '')
             {
                 return $decodedHeader;
             }
+            // 'Header does not decode'
+            throw new TokenValidationException($error, 0);
         }
         catch(TokenValidationException $e)
         {
@@ -804,15 +799,12 @@ class EHJWT
 
         try
         {
-            if ($error !== '')
-            {
-                // 'Payload does not decode'
-                throw new TokenValidationException($error, 0);
-            }
-            else
+            if ($error == '')
             {
                 return $decodedPayload;
             }
+            // 'Payload does not decode'
+            throw new TokenValidationException($error, 0);
         }
         catch(TokenValidationException $e)
         {
@@ -831,6 +823,9 @@ class EHJWT
         $unpackedTokenHeader = $this->decodeTokenHeader($tokenParts[0]);
 
         $unpackedTokenPayload = $this->decodeTokenPayload($tokenParts[1]);
+
+        // set config options
+
 
         // set object properties with header & payload values
 
@@ -895,63 +890,62 @@ class EHJWT
         }
 
         // create DB connection
-        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NAMED
-        ));
+//        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(
+//            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NAMED
+//        ));
+        if(strlen($this->dsn) > 0){
+            $dbh = $this->makeRevocationTableDatabaseConnection();
 
-        // clean out revoked token records if the UTC unix time ends in '0'
-        if (0 == (substr($utcTimeNow, -1) + 0))
-        {
-            try
+
+            // clean out revoked token records if the UTC unix time ends in '0'
+            if (0 == (substr($utcTimeNow, -1) + 0))
             {
                 try
                 {
-                    $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE exp =< $utcTimeNow");
+                    try
+                    {
+                        $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE exp =< $utcTimeNow");
 
-                    $stmt->execute();
+                        $stmt->execute();
+                    }
+                    catch(PDOException $e)
+                    {
+                        throw new EhjwtClearOldRevocationRecordsFailException('Ehjwt clear old revocation records error', 0);
+                    }
                 }
-                catch(PDOException $e)
+                catch(EhjwtClearOldRevocationRecordsFailException $e)
                 {
-                    throw new EhjwtClearOldRevocationRecordsFailException('Ehjwt clear old revocation records error', 0);
+                    error_log($e->getMessage());
                 }
+
+                // clean up DB artifacts
+                $stmt = null;
             }
-            catch(EhjwtClearOldRevocationRecordsFailException $e)
-            {
-                error_log($e->getMessage());
-            }
 
-            // clean up DB artifacts
-            $stmt = null;
-        }
+            // fix bind statement
+            $stmt = $dbh->prepare("SELECT * FROM revoked_ehjwt where sub = ?");
+            $stmt->bindParam(1, $unpackedTokenPayload['sub']);
 
-        // fix bind statement
-        $stmt = $dbh->prepare("SELECT * FROM revoked_ehjwt where sub = ?");
-        $stmt->bindParam(1, $unpackedTokenPayload['sub']);
+            // get records for this sub
+            if ($stmt->execute()) {
+                while ($row = $stmt->fetch()) {
+                    // print_r($row);
+                    // any records where jti is 0
+                    if ($row['jti'] == 0 && $row['exp'] > $utcTimeNow) {
+                        // user is under an unexpired ban condition
+                        return false;
+                    }
 
-        // get records for this sub
-        if ($stmt->execute())
-        {
-            while ($row = $stmt->fetch())
-            {
-                // print_r($row);
-                // any records where jti is 0
-                if ($row['jti'] == 0 && $row['exp'] > $utcTimeNow)
-                {
-                    // user is under an unexpired ban condition
-                    return false;
-                }
+                    if ($row['jti'] == $unpackedTokenPayload['jti']) {
+                        // token is revoked
+                        return false;
+                    }
 
-                if ($row['jti'] == $unpackedTokenPayload['jti'])
-                {
-                    // token is revoked
-                    return false;
-                }
-
-                // remove records for expired tokens to keep the table small and snappy
-                if ($row['exp'] < $utcTimeNow)
-                {
-                    // deleteRevocation record
-                    $this->deleteRecordFromRevocationTable($row['id']);
+                    // remove records for expired tokens to keep the table small and snappy
+                    if ($row['exp'] < $utcTimeNow) {
+                        // deleteRevocation record
+                        $this->deleteRecordFromRevocationTable($row['id']);
+                    }
                 }
             }
         }
@@ -1070,15 +1064,15 @@ class EHJWT
                 if (mb_check_encoding($value, 'UTF-8'))
                 {
                     $this->customClaims[$claimKey] = $value;
+                    return true;
                 }
-                else
-                {
-                    throw new EhjwtCustomClaimsInputStringException('Ehjwt custom claim non-UTF-8 input string encoding error.', 0);
-                }
+                throw new EhjwtCustomClaimsInputStringException('Ehjwt custom claim non-UTF-8 input string encoding error.', 0);
+                return false;
             }
             catch(EhjwtCustomClaimsInputStringException $e)
             {
                 error_log($e->getMessage());
+                return false;
             }
         }
     }
@@ -1109,7 +1103,7 @@ class EHJWT
         return true;
     }
 
-    private function writeRecordToRevocationTable(string $exp, $ban = false)
+    private function writeRecordToRevocationTable(string $exp, bool $ban)
     {
         try
         {
@@ -1117,18 +1111,20 @@ class EHJWT
             {
                 $userBanJtiPlaceholder = 0;
 
+                if (!isset($ban)) {
+                    $ban = false;
+                }
+
                 $dbh = $this->makeRevocationTableDatabaseConnection();
 
                 $stmt = $dbh->prepare("INSERT INTO revoked_ehjwt (jti, sub, exp) VALUES (?, ?, ?)");
 
+                $stmt->bindParam(1, $this->jti);
                 if ($ban)
                 {
                     $stmt->bindParam(1, $userBanJtiPlaceholder);
                 }
-                else
-                {
-                    $stmt->bindParam(1, $this->jti);
-                }
+
                 $stmt->bindParam(2, $this->sub);
                 $stmt->bindParam(3, $exp);
 
@@ -1180,8 +1176,8 @@ class EHJWT
 
     private function makeRevocationTableDatabaseConnection()
     {
-        return new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
+        return new PDO($this->dsn, $this->dbUser, $this->dbPassword, array(
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NAMED
         ));
     }
 
@@ -1238,9 +1234,10 @@ class EHJWT
         }
     }
 
-    private function unpackToken(bool $clearClaimsFirst = true)
+    private function unpackToken(bool $clearClaimsFirst)
     {
-        if ($clearClaimsFirst === true)
+
+        if (isset($clearClaimsFirst) && $clearClaimsFirst === true)
         {
             $this->clearClaims();
         }
@@ -1251,22 +1248,26 @@ class EHJWT
 
         foreach ($tokenClaims as $claimKey => $value)
         {
-            if (in_array($claimKey, array(
-                'iss',
-                'sub',
-                'aud',
-                'exp',
-                'nbf',
-                'iat',
-                'jti'
-            ) , true) && !is_null($value))
+            if (in_array(
+                    $claimKey,
+                    array(
+                        'iss',
+                        'sub',
+                        'aud',
+                        'exp',
+                        'nbf',
+                        'iat',
+                        'jti'
+                    ),
+                    true
+                ) &&
+                !is_null($value)
+            )
             {
                 $this->{$claimKey} = $value;
+                continue;
             }
-            else
-            {
-                $this->customClaims[$claimKey] = $value;
-            }
+            $this->customClaims[$claimKey] = $value;
         }
     }
 }
