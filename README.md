@@ -163,10 +163,16 @@ Ensure that the phpdbg and xdebug extensions are avaialble to make developer lif
 
 Run the tests with the PHPUnit installed in the dev dependencies
 
+You need to set up the database and provide valid connection credentials
+
 ```bash
+mysql -u{{dbUser}} -p < schema/ehjwt-mysql.sql
+
 export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_port=9000 remote_host=127.0.0.1 remote_connect_back=0"
 
-vendor/bin/phpunit --coverage-clover /tmp/clover/clover.xml --coverage-html /tmp/clover
+vendor/bin/phpmd src/EHJWT/  html cleancode --suffixes php --reportfile build/phpmd.html
+
+vendor/bin/phpunit
 ```
 
 ## Step B - Count Lines of Code:
