@@ -1,3 +1,7 @@
+CREATE DATABASE EHJWT;
+
+USE EHJWT;
+
 CREATE TABLE IF NOT EXISTS `revoked_ehjwt` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `jti` bigint unsigned NOT NULL,
