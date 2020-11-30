@@ -36,6 +36,12 @@
   </filter>
   <php>
     <env name="APP_ENV" value="testing" />
+    <env name="ESJWT_DSN" value="mysql:host=localhost;dbname=ehjwt" force="true" />
+    <env name="ESJWT_DB_USER" value="envbrad" force="true" />
+    <env name="ESJWT_DB_PASS" value="envpassword" force="true" />
+    <env name="ESJWT_JWT_SECRET" value="envsecret" force="true" />
+    <env name="ESJWT_ISS" value="env.BradChesney.com" force="true" />
+    <env name="ESJWT_AUD" value="envusers" force="true" />
     <ini name="display_errors" value="On" />
     <ini name="display_startup_errors" value="On" />
   </php>
