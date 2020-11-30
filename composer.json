@@ -16,9 +16,9 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.14",
-        "phpunit/php-code-coverage": "^6.1",
-        "phpmd/phpmd" : "@stable",
-        "phpunit/phpunit": "^7"
+        "phpunit/php-code-coverage": "^9",
+        "phpmd/phpmd" : "^2.9",
+        "phpunit/phpunit": "^9"
     },
     "suggest": {
         "ext-phpdbg": "^0",

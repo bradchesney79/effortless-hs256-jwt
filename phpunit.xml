@@ -1,60 +1,37 @@
-<phpunit
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/7.5/phpunit.xsd"
-   backupGlobals="true"
-   backupStaticAttributes="false"
-   beStrictAboutOutputDuringTests="false"
-   bootstrap="vendor/autoload.php"
-   cacheResult="false"
-   cacheTokens="false"
-   colors="true"
-   convertErrorsToExceptions="true"
-   convertNoticesToExceptions="true"
-   convertWarningsToExceptions="true"
-   forceCoversAnnotation="false"
-   processIsolation="true"
-   stopOnError="false"
-   stopOnFailure="false"
-   stopOnIncomplete="false"
-   stopOnSkipped="false"
-   stopOnRisky="false"
-   testSuiteLoaderFile="./vendor/phpunit/phpunit/PHPUnit/Runner/StandardTestSuiteLoader.php"
-   timeoutForSmallTests="1"
-   timeoutForMediumTests="10"
-   timeoutForLargeTests="60"
-   verbose="true"
->
+<?xml version="1.0"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd" backupGlobals="true" backupStaticAttributes="false" beStrictAboutOutputDuringTests="false" bootstrap="vendor/autoload.php" cacheResult="false" colors="true" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true" forceCoversAnnotation="false" processIsolation="true" stopOnError="false" stopOnFailure="false" stopOnIncomplete="false" stopOnSkipped="false" stopOnRisky="false" testSuiteLoaderFile="./vendor/phpunit/phpunit/PHPUnit/Runner/StandardTestSuiteLoader.php" timeoutForSmallTests="1" timeoutForMediumTests="10" timeoutForLargeTests="60" verbose="true">
+  <coverage>
+    <include>
+      <directory suffix=".php">src/EHJWT</directory>
+    </include>
+    <report>
+      <clover outputFile="build/coverage.xml"/>
+      <html outputDirectory="build" lowUpperBound="50" highLowerBound="85"/>
+      <php outputFile="build/coverage.serialized"/>
+      <text outputFile="php://stdout" showUncoveredFiles="false"/>
+    </report>
+  </coverage>
   <testsuites>
     <testsuite name="unit">
       <directory suffix=".php">tests/unit</directory>
     </testsuite>
   </testsuites>
-  <filter>
-    <whitelist>
-      <directory suffix=".php">src/EHJWT</directory>
-    </whitelist>
-  </filter>
   <php>
-    <env name="APP_ENV" value="testing" />
-    <env name="ESJWT_DSN" value="mysql:host=localhost;dbname=ehjwt" force="true" />
-    <env name="ESJWT_DB_USER" value="envbrad" force="true" />
-    <env name="ESJWT_DB_PASS" value="envpassword" force="true" />
-    <env name="ESJWT_JWT_SECRET" value="envsecret" force="true" />
-    <env name="ESJWT_ISS" value="env.BradChesney.com" force="true" />
-    <env name="ESJWT_AUD" value="envusers" force="true" />
-    <ini name="display_errors" value="On" />
-    <ini name="display_startup_errors" value="On" />
+    <env name="APP_ENV" value="testing"/>
+    <env name="ESJWT_DSN" value="mysql:host=localhost;dbname=ehjwt" force="true"/>
+    <env name="ESJWT_DB_USER" value="envbrad" force="true"/>
+    <env name="ESJWT_DB_PASS" value="envpassword" force="true"/>
+    <env name="ESJWT_JWT_SECRET" value="envsecret" force="true"/>
+    <env name="ESJWT_ISS" value="env.BradChesney.com" force="true"/>
+    <env name="ESJWT_AUD" value="envusers" force="true"/>
+    <ini name="display_errors" value="On"/>
+    <ini name="display_startup_errors" value="On"/>
   </php>
-  <logging>
-    <log type="coverage-clover" target="build/coverage.xml" />
-    <log type="coverage-html" target="build" lowUpperBound="50" highLowerBound="85" />
-    <log type="coverage-php" target="build/coverage.serialized" />
-    <log type="coverage-text" target="php://stdout" showUncoveredFiles="false" />
-  </logging>
-<!--  <report>-->
-<!--    <clover outputFile="build/clover.xml" />-->
-<!--    <html outputDirectory="build" lowUpperBound="1" highLowerBound="99" />-->
-<!--    <php outputFile="build/coverage.php" />-->
-<!--    <text outputFile="coverage.txt" showUncoveredFiles="false" showOnlySummary="true" />-->
-<!--  </report>-->
+  <logging/>
+  <!--  <report>-->
+  <!--    <clover outputFile="build/clover.xml" />-->
+  <!--    <html outputDirectory="build" lowUpperBound="1" highLowerBound="99" />-->
+  <!--    <php outputFile="build/coverage.php" />-->
+  <!--    <text outputFile="coverage.txt" showUncoveredFiles="false" showOnlySummary="true" />-->
+  <!--  </report>-->
 </phpunit>
