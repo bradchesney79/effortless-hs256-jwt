@@ -133,18 +133,93 @@ class ehjwtTest extends TestCase
 
     public function testLoadingConfigFile() {
 
-        $this->assertFileNotExists('custom-config.conf');
-        if(!file_exists('custom-config.conf')) {
+        $this->assertFileNotExists('custom-config-conf.php');
+
+        if(!file_exists('custom-config-conf.php')) {
             // create custom config file
-            $customConfigFile = fopen("custom-config.conf", "w");
-            $txt = "Jane Doe\n";
-            fwrite($customConfigFile, $txt);
+            $customConfigFile = fopen("custom-config-conf.php", "w");
+
+            // fill file with config info
+
+            fwrite($customConfigFile, "<?php\n");
+            fwrite($customConfigFile, "return [\n");
+            fwrite($customConfigFile, "'dsn' => 'mysql:host=localhost;dbname=ehjwt',\n");
+            fwrite($customConfigFile, "'dbUser' => 'brad',\n");
+            fwrite($customConfigFile, "'dbPassword' => 'password',\n");
+            fwrite($customConfigFile, "'jwtSecret' => 'Secret',\n");
+            fwrite($customConfigFile, "'iss' => 'BradChesney.com',\n");
+            fwrite($customConfigFile, "'aud' => 'users',\n");
+            fwrite($customConfigFile, "'disallowArguments' => 'false'\n");
+            fwrite($customConfigFile, "];");
+
+            //fwrite($customConfigFile, $txt);
             fclose($customConfigFile);
+
+            // create token using config file
+
+            $jwt = new EHJWT('', 'custom-config-conf.php', '', '', '', '', '');
+            $jwt->addOrUpdateIatProperty('10000');
+            $jwt->addOrUpdateNbfProperty('0');
+            $jwt->addOrUpdateSubProperty('1000');
+            $jwt->addOrUpdateJtiProperty('1');
+            $jwt->addOrUpdateExpProperty('1887525317');
+
+            $jwt->addOrUpdateCustomClaim('age', '39');
+            $jwt->addOrUpdateCustomClaim('sex', 'male');
+            $jwt->addOrUpdateCustomClaim('location', 'Davenport, Iowa');
 
 
             // delete custom config file
-            unlink(custom-config.conf);
+            if (!unlink('custom-config-conf.php')) {
+                assertFileNotExists('custom-config-conf.php');
+            }
+
+            $jwt->createToken();
+            $claims = $jwt->getTokenClaims();
+
+            $this->assertEquals('BradChesney.com', $claims['iss']);
+            $this->assertEquals('users', $claims['aud']);
+            $this->assertEquals('10000', $claims['iat']);
+            $this->assertEquals('0', $claims['nbf']);
+            $this->assertEquals('1000', $claims['sub']);
+            $this->assertEquals('1', $claims['jti']);
+            $this->assertEquals('1887525317', $claims['exp']);
+
+            $this->assertEquals('39', $claims['age']);
+            $this->assertEquals('male', $claims['sex']);
+            $this->assertEquals('Davenport, Iowa', $claims['location']);
         }
+    }
+
+    public function testLoadingEnvVars() {
+
+        // create token using env vars
+
+        $jwt = new EHJWT();
+        $jwt->addOrUpdateIatProperty('10000');
+        $jwt->addOrUpdateNbfProperty('0');
+        $jwt->addOrUpdateSubProperty('1000');
+        $jwt->addOrUpdateJtiProperty('1');
+        $jwt->addOrUpdateExpProperty('1887525317');
+
+        $jwt->addOrUpdateCustomClaim('age', '39');
+        $jwt->addOrUpdateCustomClaim('sex', 'male');
+        $jwt->addOrUpdateCustomClaim('location', 'Davenport, Iowa');
+
+        $jwt->createToken();
+        $claims = $jwt->getTokenClaims();
+
+        $this->assertEquals('env.BradChesney.com', $claims['iss']);
+        $this->assertEquals('envusers', $claims['aud']);
+        $this->assertEquals('10000', $claims['iat']);
+        $this->assertEquals('0', $claims['nbf']);
+        $this->assertEquals('1000', $claims['sub']);
+        $this->assertEquals('1', $claims['jti']);
+        $this->assertEquals('1887525317', $claims['exp']);
+
+        $this->assertEquals('39', $claims['age']);
+        $this->assertEquals('male', $claims['sex']);
+        $this->assertEquals('Davenport, Iowa', $claims['location']);
     }
 
 //    public function testCreateToken()
@@ -671,3 +746,13 @@ class ehjwtTest extends TestCase
 //        putenv('ESJWT_USE_ENV_VARS');
 //    }
 }
+
+//class testFileRemovalException extends Exception {
+//    public function __construct(string $message = '', int $code = 0, Exception $previous = null)
+//    {
+//        parent::__construct($message = '', $code = 0);
+//
+//        // some code
+//        return false;
+//    }
+//}
