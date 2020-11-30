@@ -102,12 +102,12 @@ class EHJWT
      */
     protected string $configFile = '';
 
-//    /**
-//     * The config data.
-//     *
-//     * @var array
-//     */
-//    protected array $config = [];
+    /**
+     * The config data.
+     *
+     * @var array
+     */
+    protected $configFileSettings = [];
 
     /**
      *  The flag to disallow __constructor arguments
@@ -251,7 +251,7 @@ class EHJWT
 
     private function setDsnFromConfig()
     {
-        $dsn = $this->config['dsn'];
+        $dsn = $this->configFileSettings['dsn'];
         if (strlen($dsn) > 0) {
             $this->dsn = $dsn;
             return true;
@@ -261,7 +261,7 @@ class EHJWT
 
     private function setDbUserFromConfig()
     {
-        $dbUser = $this->config['dbUser'];
+        $dbUser = $this->configFileSettings['dbUser'];
         if (strlen($dbUser) > 0) {
             $this->dbUser = $dbUser;
             return true;
@@ -271,7 +271,7 @@ class EHJWT
 
     private function setDbPasswordFromConfig()
     {
-        $dbPassword = $this->config['dbPassword'];
+        $dbPassword = $this->configFileSettings['dbPassword'];
         if (strlen($dbPassword) > 0) {
             $this->dbPassword = $dbPassword;
             return true;
@@ -281,7 +281,7 @@ class EHJWT
 
     private function setJwtSecretFromConfig()
     {
-        $jwtSecret = $this->config['jwtSecret'];
+        $jwtSecret = $this->configFileSettings['jwtSecret'];
         if (strlen($jwtSecret) > 0)
         {
             $this->jwtSecret = $jwtSecret;
@@ -292,7 +292,7 @@ class EHJWT
 
     private function setIssFromConfig()
     {
-        $iss = $this->config['iss'];
+        $iss = $this->configFileSettings['iss'];
         if (strlen($iss) > 0)
         {
             $this->iss = $iss;
@@ -303,7 +303,7 @@ class EHJWT
 
     private function setAudFromConfig()
     {
-        $aud = $this->config['aud'];
+        $aud = $this->configFileSettings['aud'];
         if (strlen($aud) > 0)
         {
             $this->aud = $aud;
@@ -339,7 +339,7 @@ class EHJWT
 
     private function setPropertiesFromConfigFile()
     {
-        $this->config = require $this->configFile;
+        $this->configFileSettings = require($this->configFile);
         $this->setDsnFromConfig();
         $this->setDbUserFromConfig();
         $this->setDbPasswordFromConfig();
@@ -375,7 +375,6 @@ class EHJWT
         if (strlen($dbPassword) > 0)
         {
             $this->dbPassword = $dbPassword;
-            //$this->config['dbPassword'] = $dbPassword;
             return true;
         }
         return false;
@@ -890,9 +889,6 @@ class EHJWT
         }
 
         // create DB connection
-//        $dbh = new PDO($this->config['dsn'], $this->config['dbUser'], $this->config['dbPassword'], array(
-//            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NAMED
-//        ));
         if(strlen($this->dsn) > 0){
             $dbh = $this->makeRevocationTableDatabaseConnection();
 
