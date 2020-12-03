@@ -1,5 +1,7 @@
 build
 composer.lock
 config/ehjwt-conf.php
+custom-config-conf.php
+ehjwt-conf.php
 vendor
 .idea
