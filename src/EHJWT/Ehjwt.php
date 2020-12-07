@@ -111,57 +111,25 @@ class EHJWT
     protected $configFileSettings = [];
 
     /**
-     *  The flag to disallow __constructor arguments
-     *
-     * @var string
-     */
-    private string $disallowArguments = 'false';
-
-    /**
      * Error Object
      *
      * @var object
      */
     public object $error;
 
+    /**
+     * Banned users data.
+     *
+     * @var array
+     */
+    public $bannedUsers = [];
+
     //    private const jwtHeader = array(
     //        'alg' => 'HS256',
     //        'typ' => 'JWT'
     //    );
-    private bool $enforceUsingEnvVars = false;
-
-    private bool $enforceDisallowArguments = false;
 
     // methods
-    private function checkEnforceUsingEnvVars()
-    {
-        if (getenv('EHJWT_USE_ENV_VARS') == true)
-        {
-            $this->enforceUsingEnvVars = true;
-            return true;
-        }
-
-        $this->enforceUsingEnvVars = false;
-        return false;
-    }
-
-    private function checkDisallowArguments()
-    {
-
-        $configDisallowArguments = 'false';
-        if (isset($this->disallowArguments))
-        {
-            $configDisallowArguments = $this->disallowArguments;
-        }
-
-        if (getenv('EHJWT_DISALLOW_ARGUMENTS') == 'true' || $configDisallowArguments == 'true')
-        {
-            $this->enforceDisallowArguments = true;
-            return true;
-        }
-        $this->enforceDisallowArguments = false;
-        return false;
-    }
 
     private function retrieveEnvValue(string $envKey)
     {
@@ -327,55 +295,27 @@ class EHJWT
         return false;
     }
 
-    private function setDisallowArgumentsFromConfigOld()
-    {
-        // Todo: is this brittle-- will undefined break all the things
-        $disallowArguments = $this->configFileSettings['disallowArguments'];
-        if (strlen($disallowArguments) > 0 && $disallowArguments == 'true')
-        {
-            $this->disallowArguments = 'true';
-            $this->enforceDisallowArguments = true;
-            return true;
-        }
-        return false;
-    }
-
     private function setPropertiesFromConfigFile(string $configFileWithPath = '')
     {
-        $allowArguments = false;
-        $configFileSettings = '';
         $success = false;
-        if (file_exists(__DIR__ . '/../config/ehjwt-conf.php')) {
-            $configFileSettings = require __DIR__ . '/../config/ehjwt-conf.php';
-            $this->configFile = __DIR__ . '/../config/ehjwt-conf.php';
-            if ($configFileSettings['disallowArguments'] == 'false') {
-                $allowArguments = true;
-            }
-            $success = true;
-        }
-
-        if (strlen($configFileWithPath) > 0 && file_exists($configFileWithPath) && $allowArguments == 'true')
+        if (strlen($configFileWithPath) > 0 && file_exists($configFileWithPath))
         {
-            unset($configFileSettings);
             $this->configFile = $configFileWithPath;
-            $configFileSettings = require $this->configFile;
-            $success = true;
-        }
-        $this->configFileSettings = $configFileSettings;
-        return $success;
-    }
 
-    private function setPropertiesFromConfigFileOld()
-    {
-        $this->configFileSettings = require ($this->configFile);
-        $this->setDsnFromConfig();
-        $this->setDbUserFromConfig();
-        $this->setDbPasswordFromConfig();
-        $this->setJwtSecretFromConfig();
-        $this->setIssFromConfig();
-        $this->setAudFromConfig();
-        $this->setDisallowArgumentsFromConfig();
-        return true;
+            try {
+                $this->configFileSettings = require $this->configFile;
+                $this->setDsnFromConfig();
+                $this->setDbUserFromConfig();
+                $this->setDbPasswordFromConfig();
+                $this->setJwtSecretFromConfig();
+                $this->setIssFromConfig();
+                $this->setAudFromConfig();
+                $success = true;
+            }
+            catch (Exception $e) {
+            }
+        }
+        return $success;
     }
 
     private function setDsnFromArguments(string $dsn)
@@ -449,32 +389,28 @@ class EHJWT
         return true;
     }
 
-    public function __construct(string $secret = '', string $file = '', string $dsn = '', string $dbUser = '', string $dbPassword = '', string $iss = '', string $aud = '')
+    public function __construct(string $secret = '', string $configFileNameWithPath = '', string $dsn = '', string $dbUser = '', string $dbPassword = '', string $iss = '', string $aud = '')
     {
 
-        $this->setPropertiesFromEnvVars();
+        try {
+            $this->setPropertiesFromEnvVars();
 
-        $this->checkEnforceUsingEnvVars();
-
-        if ($this->enforceUsingEnvVars)
-        {
-            trigger_error('Note: EHJWT is set to bypass config files and constructor arguments', 'E_USER_NOTICE');
-        }
-        else
-        {
-            // presence of config file
-            $this->setPropertiesFromConfigFile($this->configFile);
-
-            if ($this->disallowArguments)
-            {
-                trigger_error('Note EHJWT is set to bypass constructor arguments', 'E_USER_NOTICE');
+            if(strlen($configFileNameWithPath) > 0) {
+                $this->configFile = $configFileNameWithPath;
             }
-            else
-            {
-                $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
+
+            if (strlen($this->configFile) > 0) {
+                $this->setPropertiesFromConfigFile($this->configFile);
             }
+
+            $this->setPropertiesFromArguments($secret, $dsn, $dbUser, $dbPassword, $iss, $aud);
+
+            return true;
         }
-        return true;
+        catch(Exception $e) {
+            // something
+
+        }
     }
 
     //    private function addOrUpdateAudProperty(string $aud) {
@@ -505,6 +441,16 @@ class EHJWT
         return false;
     }
 
+    public function addOrUpdateNbfProperty(string $nbf)
+    {
+        if (strlen($nbf) > 0)
+        {
+            $this->nbf = $nbf;
+            return true;
+        }
+        return false;
+    }
+
     //    private function addOrUpdateIssProperty(string $iss) {
     //        if (strlen($iss) > 0) {
     //            $this->iss = $iss;
@@ -517,16 +463,6 @@ class EHJWT
         if (strlen($jti) > 0)
         {
             $this->jti = $jti;
-            return true;
-        }
-        return false;
-    }
-
-    public function addOrUpdateNbfProperty(string $nbf)
-    {
-        if (strlen($nbf) > 0)
-        {
-            $this->nbf = $nbf;
             return true;
         }
         return false;
@@ -702,8 +638,6 @@ class EHJWT
             return $tokenParts;
         }
         throw new RuntimeException('Token does not contain three delimited sections', 0);
-        return false;
-
     }
 
     private function verifyThreeMembers(array $array)
@@ -1241,7 +1175,24 @@ class EHJWT
     // ToDo: Provide access to a list of banned users
     public function getBannedUsers()
     {
-        return true;
+        if($this->retrieveBannedUsers()) {
+            return $this->bannedUsers;
+        }
+        throw new RuntimeException('Could not retrieve banned user data', 0);
+    }
+
+    private function retrieveBannedUsers() {
+        try {
+            $this->makeRevocationTableDatabaseConnection();
+            // select banned users
+            // set banned users property
+            $this->bannedUsers = array('Elvis');
+            return true;
+        }
+        catch(Exception $e){
+            // something
+        }
+        return false;
     }
 
     public function deleteStandardClaims(string $standardClaimNamesCommaSeparated)
