@@ -33,13 +33,7 @@ return [
 
 	'password' => "",
 
-	'jwtSecret' => "",
-
-	// the issuer
-	'iss' => "",
-	
-	// the audience
-	'aud' => ""
+	'jwtSecret' => ""
 
 ];
 
