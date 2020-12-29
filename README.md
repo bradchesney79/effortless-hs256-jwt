@@ -182,22 +182,18 @@ cloc --exclude-dir=vendor,build .
 ```
 
 11/2020 1,800
+12/2020 1,638
 
 ToDo:
 
-- Write last few tests for token validation
+- Turn detection of RuntimeException tests to also test the exception message for specificity
 
 - Make the library available on packagist
-
-- Finish code coverage phpdoc blocks for tests
 
 - Make the README not awful
 
 - Use https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df
   ...as the basis for instructions on how to functionally use this library beyond syntax and logical flow
-
-- Convert any error_log lines to trigger_error where more beneficial
-
 
 Caveats:
 
@@ -207,6 +203,6 @@ Caveats:
 
 - I have made decisions that force you to use this library in the closest to best practices using a specific secret key as I could manage. Other libraries allow you more freedom-- potentially to shoot yourself in the foot.
 
-- There is no storage of who or what tokens are out there. You cannot see if one exists. You can only validate and leverage tokens that come back to you.
+- There is no storage of who or what tokens are out there. You cannot see if one exists with this library. You can only validate and leverage tokens that come back to you.
 
-- Banning isn't part of the JWT standard-- but, it seemed like a simple to create and convenient mechanism to expose-- and no one has to use that functionality.
+- Banning isn't part of the JWT standard-- but, it seemed like a simple to create and convenient mechanism to expose from this library-- and no one has to use that functionality.
