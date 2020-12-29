@@ -1,27 +1,27 @@
 <span style="color:red">I believe I have brought the library to a usable and critiquable state. As of now, November 20th of 2019, I consider this library beta code.</span>
 
-I created this package because I didn't love the existing libraries out there. Also, this package has only a dependency on the PDO database driver avaialble.
+I created this package because I didn't love the existing libraries out there. Also, this package has only a dependency on the PDO database driver and mbstring extensions being avaialble.
 
 So, this is a low level library designed to:
 
 - Allow you to specify the config parameters via passing them as arguments in the Ehjwt object instantiation
-- Allow you to specify a path and config file or use a config file in a default location with a default name of config/ehjwt-conf.php
+- Allow you to specify a path and config file, I recommend config/ehjwt-conf.php
 - Allow you to specify the config parameters with environment variables*
-- Allow you to additionally specify an environment variable that prevents overriding the environment variable configuration options
 
 - Allow you to rest easy that the algorithm will always be HS256
-- Allow you to create a JWT Token string with standard "claims" some prefilled according to the config file
-- Allow you to append custom claims
-- Allow you to edit custom claims
-- Allow you to remove custom claims
+- Allow you to create a JWT Token string with standard and custom claims
+- Allow you to edit claims
+- Allow you to remove claims
 - Allow you to retrieve a JWT Token string
 - Allow you to read token claims
 - Allow you to validate a token
 - Allow you to revoke a token
 
+
 - Allow you to be confident about settings, my library uses your environment variables, config file, or arguments passed to the instantiation constructor in that order for all configurable values
 
 - Allow you to temporarily or permanently revoke all tokens associated with an identified user-- "banning" a user, admittedly, isn't part of the JWT standard
+- Allow you to extract a banned user list
 
 * There is an intermediate step you must take to make system environment variables available to PHP, doable... but you need some glue configuration for passthrough to the PHP interpreter.
 
