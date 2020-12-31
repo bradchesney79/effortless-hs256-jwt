@@ -47,6 +47,20 @@ class EHJWT
     //     */
     //    public object $error;
 
+    public $settingConfigurationNames = array(
+        'jwtSecret',
+        'dsn',
+        'dbUser',
+        'dbPassword'
+    );
+
+    public $envVarNames = array(
+        'EHJWT_JWT_SECRET',
+        'EHJWT_DSN',
+        'EHJWT_DB_USER',
+        'EHJWT_DB_PASS'
+    );
+
     // methods
     public function __construct(string $secret = '', string $configFileNameWithPath = '', string $dsn = '', string $dbUser = '', string $dbPassword = '')
     {
@@ -64,22 +78,11 @@ class EHJWT
 
     private function setConfigurationsFromEnvVars()
     {
-        $envVarNames = array(
-            'EHJWT_JWT_SECRET',
-            'EHJWT_DSN',
-            'EHJWT_DB_USER',
-            'EHJWT_DB_PASS'
-        );
-        $settingConfigurationName = array(
-            'jwtSecret',
-            'dsn',
-            'dbUser',
-            'dbPassword'
-        );
-        for ($i = 0; $i < count($envVarNames); $i++) {
-            $retrievedEnvironmentVariableValue = getenv($envVarNames[$i]);
+
+        for ($i = 0; $i < count($this->envVarNames); $i++) {
+            $retrievedEnvironmentVariableValue = getenv($this->envVarNames[$i]);
             if (mb_strlen($retrievedEnvironmentVariableValue) > 0) {
-                $this->configurations[$settingConfigurationName[$i]] = $retrievedEnvironmentVariableValue;
+                $this->configurations[$this->settingConfigurationNames[$i]] = $retrievedEnvironmentVariableValue;
             }
         }
     }
@@ -94,12 +97,7 @@ class EHJWT
             if (count($configFileSettings) == 0) {
                 trigger_error('No valid configurations received from EHJWT config file', 8);
             }
-            foreach (array(
-                         'jwtSecret',
-                         'dsn',
-                         'dbUser',
-                         'dbPassword'
-                     ) as $settingName) {
+            foreach ($this->settingConfigurationNames as $settingName) {
                 $retrievedConfigFileVariableValue = $configFileSettings[$settingName];
                 if (mb_strlen($retrievedConfigFileVariableValue) > 0) {
                     $this->configurations[$settingName] = $retrievedConfigFileVariableValue;
@@ -110,12 +108,7 @@ class EHJWT
 
     private function setConfigurationsFromArguments(string $jwtSecret = '', string $dsn = '', string $dbUser = '', string $dbPassword = '')
     {
-        foreach (array(
-                     'jwtSecret',
-                     'dsn',
-                     'dbUser',
-                     'dbPassword'
-                 ) as $settingName) {
+        foreach ($this->settingConfigurationNames as $settingName) {
             $argumentValue = $
             {
             "$settingName"
