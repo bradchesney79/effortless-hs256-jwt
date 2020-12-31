@@ -137,6 +137,18 @@ class ehjwtTest extends TestCase
         }
         if (!file_exists('config/custom-config-conf.php'))
         {
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////
             // create custom config file
             $customConfigFile = fopen("config/custom-config-conf.php", "w");
             // fill file with config info
@@ -144,6 +156,8 @@ class ehjwtTest extends TestCase
             fwrite($customConfigFile, "return [];");
             fclose($customConfigFile);
             $this->expectException('LogicException');
+            $jwt = new EHJWT('', 'config/custom-config-conf.php', '', '', '');
+            unset($jwt);
             if (!unlink('config/custom-config-conf.php'))
             {
                 error_log('EHJWT LoadingConfigFile test config file not deleted. Sadness. Everybody... sadness. Frowny faces everyone. 2');
@@ -158,7 +172,7 @@ class ehjwtTest extends TestCase
         {
             if (!unlink('config/custom-config-conf.php'))
             {
-                error_log('EHJWT LoadingConfigFile test config file not deleted. Sadness. Everybody... sadness. Frowny faces everyone. 0');
+                error_log('EHJWT LoadingConfigFile test config file not deleted. Sadness. Everybody... sadness. Frowny faces everyone. 3');
             }
         }
         if (!file_exists('config/custom-config-conf.php'))
@@ -170,8 +184,9 @@ class ehjwtTest extends TestCase
             fwrite($customConfigFile, "return;");
             //fwrite($customConfigFile, $txt);
             fclose($customConfigFile);
-            // create token using config file
             $this->expectException('LogicException');
+            // create token using config file
+            $jwt = new EHJWT('', 'config/custom-config-conf.php', '', '', '');
             if (!unlink('config/custom-config-conf.php'))
             {
                 error_log('EHJWT LoadingConfigFile test config file not deleted. Sadness. Everybody... sadness. Frowny faces everyone. 3');
