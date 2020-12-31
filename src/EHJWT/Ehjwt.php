@@ -5,23 +5,22 @@ use DateTimeZone;
 use Exception;
 use LogicException;
 use PDO;
-use PDOException;
 use RuntimeException;
 class EHJWT
 {
-    // !!! ksort the properties to maintain repeatable order
-    // properties
     /*
       iss: issuer, the website that issued the token
       sub: subject, the id of the entity being granted the token
-          (int has an unsigned, numeric limit of 4294967295)
-          (bigint has an unsigned, numeric limit of 18446744073709551615)
-          (unix epoch as of "now" 1544897945)
       aud: audience, the users of the token-- generally a url or string
       exp: expires, the UTC UNIX epoch time stamp of when the token is no longer valid
       nbf: not before, the UTC UNIX epoch time stamp of when the token becomes valid
       iat: issued at, the UTC UNIX epoch time stamp of when the token was issued
       jti: JSON web token ID, a unique identifier for the JWT that facilitates revocation
+
+      DB/MySQL limits:
+      int has an unsigned, numeric limit of 4294967295
+      bigint has an unsigned, numeric limit of 18446744073709551615
+      unix epoch as of "now" 1544897945
     */
 
      /**
@@ -40,7 +39,7 @@ class EHJWT
      * @var array
      */
     protected $configurations = [];
-    //    protected $configurations = array('jwtSecret' => '', 'dsn' => '', 'dbUser' => '', 'dbPassword' => '');
+
     //    /**
     //     * Error Object
     //     *
@@ -169,6 +168,7 @@ class EHJWT
     }
     public function createToken()
     {
+        // !!! ksort to maintain properties in repeatable order
         ksort($this->tokenClaims);
         $jsonClaims = $this->jsonEncodeClaims();
         // The hash is always the same... don't bother computing it.
@@ -428,10 +428,19 @@ class EHJWT
     }
     private function retrieveBannedUsers()
     {
-        $this->makeRevocationTableDatabaseConnection();
-        $this->bannedUsers = array(
-            'Elvis'
-        );
-        return true;
+        $bannedUsers = array();
+
+        $dbh = $this->makeRevocationTableDatabaseConnection();
+
+        $stmt = $dbh->query('SELECT * FROM revoked_ehjwt WHERE `jti` = 0');
+
+        if ($stmt->execute())
+        {
+            while ($row = $stmt->fetch())
+            {
+                $bannedUsers[] = $row;
+            }
+            return $bannedUsers;
+        }
     }
 }

@@ -59,22 +59,17 @@ class ehjwtTest extends TestCase
      */
     public function testObjectInstanceIsCreated()
     {
-        $jwt = new EHJWT('jwtSecret', '', 'DSNString', 'DBUser', 'DBPassword');
+        $jwt = new EHJWT('', '', 'DSNString', 'DBUser', 'DBPassword');
         $this->assertInstanceOf(EHJWT::class , $jwt);
     }
     public function testLoadingEnvVars()
     {
         // create token using env vars
         $jwt = new EHJWT();
-        $jwt->createToken();
-        $claims = $jwt->getTokenClaims();
-        // add elvis to the test db
-        $bannedUsers = $jwt->getBannedUsers();
         $configurations = $this->getPrivateProperty($jwt, 'configurations');
         $this->assertEquals('envsecret', $configurations['jwtSecret']);
-        // ToDo: yeah, elvis is going to need replaced with an actual array of test data
-        $this->assertEquals('Elvis', $bannedUsers[0]);
     }
+
     public function testLoadingConfigFile()
     {
         if (file_exists('config/custom-config-conf.php'))
@@ -617,6 +612,7 @@ class ehjwtTest extends TestCase
         //$this->expectException('RuntimeException');
         $this->assertFalse($jwt->validateToken());
     }
+
     public function testBadTokenSignature()
     {
         $jwt = new EHJWT('jwtSecret', '', 'mysql:host=localhost;dbname=EHJWT', 'brad', 'password');
