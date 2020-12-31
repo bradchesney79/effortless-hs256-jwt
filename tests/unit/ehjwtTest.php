@@ -92,7 +92,6 @@ class ehjwtTest extends TestCase
             fwrite($customConfigFile, "'dbPassword' => 'password',\n");
             fwrite($customConfigFile, "'jwtSecret' => 'Secret',\n");
             fwrite($customConfigFile, "];");
-            //fwrite($customConfigFile, $txt);
             fclose($customConfigFile);
             // create token using config file
             $jwt = new EHJWT('', 'config/custom-config-conf.php', '', '', '');
@@ -145,9 +144,6 @@ class ehjwtTest extends TestCase
             fwrite($customConfigFile, "return [];");
             fclose($customConfigFile);
             $this->expectException('LogicException');
-            // create token using config file
-            $jwt = new EHJWT('', 'config/custom-config-conf.php', '', '', '');
-            // delete custom config file
             if (!unlink('config/custom-config-conf.php'))
             {
                 error_log('EHJWT LoadingConfigFile test config file not deleted. Sadness. Everybody... sadness. Frowny faces everyone. 2');
@@ -176,8 +172,6 @@ class ehjwtTest extends TestCase
             fclose($customConfigFile);
             // create token using config file
             $this->expectException('LogicException');
-            $jwt = new EHJWT('', 'config/custom-config-conf.php', '', '', '');
-            // delete custom config file
             if (!unlink('config/custom-config-conf.php'))
             {
                 error_log('EHJWT LoadingConfigFile test config file not deleted. Sadness. Everybody... sadness. Frowny faces everyone. 3');
@@ -447,10 +441,8 @@ class ehjwtTest extends TestCase
         $jwt->revokeToken();
         unset($jwt);
         $otherJwt = new EHJWT();
-        //$result = $otherJwt->loadToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImF1ZCI6ImVudnVzZXJzIiwiZXhwIjoiMTg4NzUyNTMxNyIsImlhdCI6IjEwMDAwIiwiaXNzIjoiZW52LkJyYWRDaGVzbmV5LmNvbSIsImp0aSI6IjEiLCJsb2NhdGlvbiI6IkRhdmVucG9ydCwgSW93YSIsIm5iZiI6IjAiLCJzZXgiOiJtYWxlIiwic3ViIjoiMTAwMCJ9.ZjJQX1NFRHZEc0RHcnZrTEhKWXk5QzYyeHVqMEoyNkVaYVpQa2wycjVXdw');
+
         $result = $otherJwt->loadToken($token);
-        //        $this->expectException('\RuntimeException');
-        //        $this->assertFalse($otherJwt->loadToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImF1ZCI6ImVudnVzZXJzIiwiZXhwIjoiMTg4NzUyNTMxNyIsImlhdCI6IjEwMDAwIiwiaXNzIjoiZW52LkJyYWRDaGVzbmV5LmNvbSIsImp0aSI6IjEiLCJsb2NhdGlvbiI6IkRhdmVucG9ydCwgSW93YSIsIm5iZiI6IjAiLCJzZXgiOiJtYWxlIiwic3ViIjoiMTAwMCJ9.ZjJQX1NFRHZEc0RHcnZrTEhKWXk5QzYyeHVqMEoyNkVaYVpQa2wycjVXdw'));
         $configurations = $this->getPrivateProperty($otherJwt, 'configurations');
         $dbh = new PDO($configurations['dsn'], $configurations['dbUser'], $configurations['dbPassword']);
         $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE `jti` = 1 AND `sub` = 314159");
@@ -462,8 +454,8 @@ class ehjwtTest extends TestCase
         $jwt = new EHJWT('', 'config/jwt-config-conf.php', '', '', '');
         $configurations = $this->getPrivateProperty($jwt, 'configurations');
         $dbh = new PDO($configurations['dsn'], $configurations['dbUser'], $configurations['dbPassword']);
-        $stmt0 = $dbh->query('DELETE FROM revoked_ehjwt WHERE 6 = 6');
-        $stmt1 = $dbh->query('INSERT INTO revoked_ehjwt (`jti`, `sub`, `exp`) VALUES (6,1000,1)');
+        $dbh->query('DELETE FROM revoked_ehjwt WHERE 6 = 6');
+        $dbh->query('INSERT INTO revoked_ehjwt (`jti`, `sub`, `exp`) VALUES (6,1000,1)');
         // assert that a record with jti of '6' exists and that the expiration is 1
         if ($stmt2 = $dbh->query('SELECT * FROM revoked_ehjwt WHERE `jti` = 6'))
         {
@@ -483,7 +475,6 @@ class ehjwtTest extends TestCase
             $x1 = 0;
             while ($row = $stmt3->fetch())
             {
-                var_dump($row);
                 $x1++;
             }
         }
@@ -518,7 +509,6 @@ class ehjwtTest extends TestCase
         $jwt->addOrUpdateJwtClaim('exp', '1887525317');
         $jwt->unbanUser();
         $jwt->createToken();
-        $token = $jwt->getToken();
         $this->assertTrue($jwt->validateToken());
     }
     public function testRemoveExpiredRevokedTokens()
@@ -570,7 +560,7 @@ class ehjwtTest extends TestCase
         $pass = $configurations['dbPassword'];
         $dbh = new PDO($dsn, $user, $pass);
         // insert expired token
-        $stmt0 = $dbh->query('INSERT INTO revoked_ehjwt `jti`, `sub`, `exp` VALUES (3, 3141592, 5)');
+        $dbh->query('INSERT INTO revoked_ehjwt `jti`, `sub`, `exp` VALUES (3, 3141592, 5)');
         $stmt1 = $dbh->query('SELECT * FROM revoked_ehjwt');
         while ($row = $stmt1->fetch())
         {
@@ -599,6 +589,12 @@ class ehjwtTest extends TestCase
         $jwt->permabanUser();
         $this->assertFalse($jwt->validateToken());
     }
+
+    public function testRetrievievalForBannedUsers() {
+        $jwt = new EHJWT('jwtSecret', '', 'mysql:host=localhost;dbname=EHJWT', 'brad', 'password');
+        $this->assertEquals(count($jwt->retrieveBannedUsers()), 1);
+    }
+
     public function testRevokeToken()
     {
         $jwt = new EHJWT('jwtSecret', '', 'mysql:host=localhost;dbname=EHJWT', 'brad', 'password');
@@ -609,7 +605,6 @@ class ehjwtTest extends TestCase
         $jwt->addOrUpdateJwtClaim('exp', '1887525317');
         $jwt->createToken();
         $jwt->revokeToken();
-        //$this->expectException('RuntimeException');
         $this->assertFalse($jwt->validateToken());
     }
 
