@@ -1,6 +1,6 @@
-<span style="color:red">I believe I have brought the library to a usable and critiquable state. As of now, November 20th of 2019, I consider this library beta code.</span>
+<span style="color:red">I believe I have brought the library to a usable and critiquable state. As of now, December of 2020, I consider this library beta code.</span>
 
-I created this package because I didn't love the existing libraries out there. Also, this package has only a dependency on the PDO database driver and mbstring extensions being avaialble.
+I created this package because I didn't love the existing libraries out there. Also, this package has only a dependency on the PDO database driver, JSON, and mbstring extensions being avaialble.
 
 So, this is a low level library designed to:
 
@@ -41,16 +41,17 @@ You may do this any combination of three ways, they supercede one another in thi
 options passed to the constructor supercedes config file provided options which override environment variable provided options
 
 - Make env or config vars available to PHP*
-- Copy and edit the example config file to the config directory which shares the same parent directory as the composer vendor directory
+- Copy and edit the example config file and then pass the path and filename to an instance
+  -I recommend storing the config file in a dirctory that shares the same parent directory as the composer vendor directory
 
 *--I use composer. But if I didn't, the parent directory of my webroot directory is where I would put it*
 
 *Alternatively, you may skip using env vars or a config file and create the object with parameters as the configs to use as such:*
 ```php
-$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword, $iss, $aud);
+$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);
 ```
 
-* Should you want to prevent developers from using a config file or options passed to the constructor, you may set ESJWT_USE_ENV_VARS as true to enforce usage of the environment variables-- it is an option available to you but it isn't fool proof.
+
 
 **Run the DB install script that can be found in the schema directory (optional, for revoking tokens and banning users)**
 _**I usually do this via a provisioning script that fires off the SQL script after installing MySQL, PHP, composer, and the dependencies installed via composer.**_
@@ -82,54 +83,42 @@ use BradChesney79/EHJWT;
 ### Create a token, append/update claims, get the token string:
 
 ```php
-$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword', 'IssuingWebsite', 'UserType');
+$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword');
 
 
 // the globally unique ID of this token and its series of potential reissues
-$jwtToken->addOrUpdateJtiProperty('1234567890'); // it is a string. nothing more, nothing less.
+$jwtToken->addOrUpdateJwtClaim('jti', '1234567890'); // it is a string. nothing more, nothing less.
 
 // issued at
-$jwtToken->addOrUpdateIatProperty('305078400'); // my birthday...
+$jwtToken->addOrUpdateJwtClaim('iat', '305078400'); // my birthday...
 
 // when this incarnation of the jwt will die as a UTC timestamp
-$jwtToken->addOrUpdateExpProperty('1887525317'); // when the T-800 comes to kill Sarah Connor
+$jwtToken->addOrUpdateJwtClaim('exp', '1887525317'); // when the T-800 comes to kill Sarah Connor
 
 // the subject-- I use this for the publicly facing user ID
-$jwtToken->addOrUpdateSubProperty('bradchesney79@gmail.com');
+$jwtToken->addOrUpdateJwtClaim('sub', 'bradchesney79@gmail.com');
 
 // ...I'll be honest. I don't use the not before field.
 // It isn't useful to me in my software designs.
 // But, it will throw an exception if you try to use it before allowed.
-// $jwtToken->addOrUpdateNbfProperty(0); // January 1st, 1970
+// $jwtToken->addOrUpdateJwtClaim('nbf', 0); // January 1st, 1970
 
 // One of many allowable custom, private claims-- but, beware, smaller the better.
-$jwtToken->addOrUpdateCustomClaim('key','value');
+$jwtToken->addOrUpdateJwtClaim('key','value');
 
 
 $jwtToken->createToken(); // this internally populates the JWT string property of your instance
 
-echo $jwtToken->getToken(); // this gives you the three part, period delimited string
+echo $jwtToken->getToken(); // this gives you the three part, period delimited string stored in the JWT string property
 ```
 
 ### Validate a token, read token claims, remove token claims:
 
 ```php
-$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword', 'IssuingWebsite', 'UserType');
+$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword');
 
-$this->loadToken('fdsafdsafdsafdsa'.'fdsfdsafdsafdsa'.'fdsafdfadsfdsafdsa');
-
-$this->unpackToken();
-
-if ($this->validateToken()) {
-    $sessionDataArray = $this->getTokenClaims();
-}
-
-if (isset($sessionDataArray['nbf']) || is_null($sessionDataArray['nbf'])) {
-    $this->deleteStandardClaims('nbf'); // same goes for iat or sub or iss or...
-}
-
-if (isset($sessionDataArray['key']) || is_null($sessionDataArray['key'])) {
-    $this->deleteCustomClaims('key'); // these are all you, they work similarly to the standard claims
+if ($jwtToken->loadToken('fdsafdsafdsafdsa'.'fdsfdsafdsafdsa'.'fdsafdfadsfdsafdsa')) {
+    $sessionDataArray = $jwtToken->getTokenClaims();
 }
 
 $this->clearClaims();
@@ -138,21 +127,17 @@ $this->clearClaims();
 ### Revoke a token, ban a user with an expiration, "permaban" a user, "unban" a user:
 
 ```php
-$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword', 'IssuingWebsite', 'UserType');
+$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword');
 
-$this->loadToken('fdsafdsafdsafdsa'.'fdsfdsafdsafdsa'.'fdsafdfadsfdsafdsa');
-
-$this->unpackToken();
-
-if ($this->validateToken()) { // you're going to use this a lot-- just checking if the token is good
-    $this->revokeToken(); // no more access via this token, so mean
+if ($jwtToken->loadToken('fdsafdsafdsafdsa'.'fdsfdsafdsafdsa'.'fdsafdfadsfdsafdsa')) {
+    $jwtToken->revokeToken(); // no more access via this token, so mean
 }
 
-$this->banUser('1703462400'); // also, banned until Christmas
+$jwtToken->banUser('1703462400'); // also, banned until Christmas
 
-$this->permabanUser(); // changed my mind, perma banned... until 12/04/292277026596 @ 3:30pm (UTC)
+$jwtToken->permabanUser(); // changed my mind, perma banned... until 12/04/292277026596 @ 3:30pm (UTC)
 
-$this->unbanUser(); // ...I had been drinking, imagined the whole thing. Sorry about that.
+$jwtToken->unbanUser(); // ...I had been drinking, imagined the whole thing. Sorry about that.
 ```
 
 * banning a user isn't part of the JWT standard, but it was a feature I wanted to incorporate
@@ -167,8 +152,6 @@ You need to set up the database and provide valid connection credentials
 
 ```bash
 mysql -u{{dbUser}} -p < schema/ehjwt-mysql.sql
-
-export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_port=9000 remote_host=127.0.0.1 remote_connect_back=0"
 
 vendor/bin/phpmd src/EHJWT/  html cleancode --suffixes php --reportfile build/phpmd.html
 
