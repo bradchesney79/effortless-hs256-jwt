@@ -117,18 +117,6 @@ class EHJWT {
     }
   }
 
-  public function addOrUpdateJwtClaim(string $key, $value, $requiredType = self::TYPE_MIXED) {
-    // ToDo: Needs more validation or something ...added utf8
-    if (gettype($value) == $requiredType || $requiredType === self::TYPE_MIXED) {
-      if (mb_detect_encoding($value, self::ENCODING_UTF_8, true)) {
-        $this->tokenClaims[$key] = $value;
-        return true;
-      }
-      throw new RuntimeException(self::ERROR_SPECIFIED_JWT_CLAIM_REQUIRED_ENCODING_MISMATCH);
-    }
-    throw new RuntimeException(self::ERROR_SPECIFIED_JWT_CLAIM_REQUIRED_TYPE_MISMATCH);
-  }
-
   public function clearClaim(string $key) {
     if (isset($key)) {
       unset($this->tokenClaims[$key]);
@@ -168,6 +156,11 @@ class EHJWT {
     return $date->getTimestamp();
   }
 
+  /**
+   * @param string $tokenString
+   *
+   * @return bool
+   */
   public function loadToken(string $tokenString) {
     $this->clearClaims();
     $this->token = $tokenString;
@@ -202,12 +195,39 @@ class EHJWT {
     return true;
   }
 
+  /**
+   * Reissues the token using the new expiration
+   *
+   * @param string $tokenString
+   * @param int $newUtcTimestampExpiration
+   */
   public function reissueToken(string $tokenString, int $newUtcTimestampExpiration) {
     if ($this->loadToken($tokenString)) {
       $this->addOrUpdateJwtClaim(self::KEY_EXP, $newUtcTimestampExpiration);
       $this->createToken();
     }
     return;
+  }
+
+  /**
+   * Adds or updates the claim for the given $key setting it to the $value
+   *
+   * @param string $key The JWT Claim key
+   * @param mixed $value The JWT Claim Value
+   * @param string $requiredType
+   *
+   * @return bool
+   */
+  public function addOrUpdateJwtClaim(string $key, $value, $requiredType = self::TYPE_MIXED) {
+    // ToDo: Needs more validation or something ...added utf8
+    if (gettype($value) == $requiredType || $requiredType === self::TYPE_MIXED) {
+      if (mb_detect_encoding($value, self::ENCODING_UTF_8, true)) {
+        $this->tokenClaims[$key] = $value;
+        return true;
+      }
+      throw new RuntimeException(self::ERROR_SPECIFIED_JWT_CLAIM_REQUIRED_ENCODING_MISMATCH);
+    }
+    throw new RuntimeException(self::ERROR_SPECIFIED_JWT_CLAIM_REQUIRED_TYPE_MISMATCH);
   }
 
   public function getTokenClaims() {
