@@ -4,10 +4,6 @@ I created this package because I didn't love the existing libraries out there. A
 
 So, this is a low level library designed to:
 
-- Allow you to specify the config parameters via passing them as arguments in the Ehjwt object instantiation
-- Allow you to specify a path and config file, I recommend config/ehjwt-conf.php
-- Allow you to specify the config parameters with environment variables*
-
 - Allow you to rest easy that the algorithm will always be HS256
 - Allow you to create a JWT Token string with standard and custom claims
 - Allow you to edit claims
@@ -15,15 +11,6 @@ So, this is a low level library designed to:
 - Allow you to retrieve a JWT Token string
 - Allow you to read token claims
 - Allow you to validate a token
-- Allow you to revoke a token
-
-
-- Allow you to be confident about settings, my library uses your environment variables, config file, or arguments passed to the instantiation constructor in that order for all configurable values
-
-- Allow you to temporarily or permanently revoke all tokens associated with an identified user-- "banning" a user, admittedly, isn't part of the JWT standard
-- Allow you to extract a banned user list
-
-* There is an intermediate step you must take to make system environment variables available to PHP, doable... but you need some glue configuration for passthrough to the PHP interpreter.
 
 ## Step 1 - Install:
 
@@ -35,26 +22,10 @@ You will need a modern version of PHP installed, PHP v7.4+.
 composer require bradchesney79/effortless-hs256-jwt
 ```
 
-**Supply the necessary particulars; a PDO DB DSN, a PDO DB user, a PDO DB password, and a "system secret"**
-
-You may do this any combination of three ways, they supercede one another in this order:
-options passed to the constructor supercedes config file provided options which override environment variable provided options
-
-- Make env or config vars available to PHP*
-- Copy and edit the example config file and then pass the path and filename to an instance
-  -I recommend storing the config file in a dirctory that shares the same parent directory as the composer vendor directory
-
-*--I use composer. But if I didn't, the parent directory of my webroot directory is where I would put it*
-
-*Alternatively, you may skip using env vars or a config file and create the object with parameters as the configs to use as such:*
+*Ccreate the object with 'secret' parameter as such:*
 ```php
-$jwt = new Ehjwt($secretString, null, $dsn, $dbUser, $dbPassword);
+$jwt = new Ehjwt($secretString);
 ```
-
-
-
-**Run the DB install script that can be found in the schema directory (optional, for revoking tokens and banning users)**
-_**I usually do this via a provisioning script that fires off the SQL script after installing MySQL, PHP, composer, and the dependencies installed via composer.**_
 
 ## Step 1a
 
@@ -83,7 +54,7 @@ use BradChesney79/EHJWT;
 ### Create a token, append/update claims, get the token string:
 
 ```php
-$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword');
+$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption');
 
 
 // the globally unique ID of this token and its series of potential reissues
@@ -115,7 +86,7 @@ echo $jwtToken->getToken(); // this gives you the three part, period delimited s
 ### Validate a token, read token claims, remove token claims:
 
 ```php
-$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword');
+$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption');
 
 if ($jwtToken->loadToken('fdsafdsafdsafdsa'.'fdsfdsafdsafdsa'.'fdsafdfadsfdsafdsa')) {
     $sessionDataArray = $jwtToken->getTokenClaims();
@@ -123,24 +94,6 @@ if ($jwtToken->loadToken('fdsafdsafdsafdsa'.'fdsfdsafdsafdsa'.'fdsafdfadsfdsafds
 
 $this->clearClaims();
 ```
-
-### Revoke a token, ban a user with an expiration, "permaban" a user, "unban" a user:
-
-```php
-$jwtToken = new EHJWT('SuperSecretStringUsedForOneWayEncryption', 'mysql:host=localhost;dbname=ehjwt', 'DBuser', 'DBPassword');
-
-if ($jwtToken->loadToken('fdsafdsafdsafdsa'.'fdsfdsafdsafdsa'.'fdsafdfadsfdsafdsa')) {
-    $jwtToken->revokeToken(); // no more access via this token, so mean
-}
-
-$jwtToken->banUser('1703462400'); // also, banned until Christmas
-
-$jwtToken->permabanUser(); // changed my mind, perma banned... until 12/04/292277026596 @ 3:30pm (UTC)
-
-$jwtToken->unbanUser(); // ...I had been drinking, imagined the whole thing. Sorry about that.
-```
-
-* banning a user isn't part of the JWT standard, but it was a feature I wanted to incorporate
 
 ## Step A - Test:
 
@@ -166,12 +119,10 @@ cloc --exclude-dir=vendor,build .
 
 11/2020 1,800
 12/2020 1,638
-
+05/2021 1,087
 ToDo:
 
 - Turn detection of RuntimeException tests to also test the exception message for specificity
-
-- Make the library available on packagist
 
 - Make the README not awful
 
@@ -187,5 +138,3 @@ Caveats:
 - I have made decisions that force you to use this library in the closest to best practices using a specific secret key as I could manage. Other libraries allow you more freedom-- potentially to shoot yourself in the foot.
 
 - There is no storage of who or what tokens are out there. You cannot see if one exists with this library. You can only validate and leverage tokens that come back to you.
-
-- Banning isn't part of the JWT standard-- but, it seemed like a simple to create and convenient mechanism to expose from this library-- and no one has to use that functionality.

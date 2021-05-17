@@ -65,9 +65,8 @@ class ehjwtTest extends TestCase
     
     public function testObjectInstantiationFails()
     {
-        $jwt = new EHJWT("jwtSecr");
-        $this->assertFalse($jwt = new EHJWT("jwtSecr"));
         $this->expectException('RuntimeException');
+        $this->assertFalse($jwt = new EHJWT("jwtSecr"));
     }
 
     public function testLoadTokenWithIntArgument()
@@ -91,8 +90,8 @@ class ehjwtTest extends TestCase
     public function testLoadTokenWithEmptyArgument()
     {
         $jwt = new EHJWT('jwtSecret');
-        $this->expectException('RuntimeError');
-        $jwt->loadToken();
+        $this->expectException('RuntimeException');
+        $jwt->loadToken('');
     }
     public function testClaimsAreAdded()
     {
@@ -177,6 +176,11 @@ class ehjwtTest extends TestCase
         $itVerks = $jwt->validateToken();
         $this->assertEquals(true, $itVerks);
         $this->assertEquals('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImF1ZCI6InVzZXIiLCJleHAiOiIxODg3NTI1MzE3IiwiaWF0IjoiMTAwMDAiLCJpc3MiOiJCcmFkQ2hlc25leS5jb20iLCJqdGkiOiI0IiwibG9jYXRpb24iOiJEYXZlbnBvcnQsIElvd2EiLCJuYmYiOiIwIiwic2V4IjoibWFsZSIsInN1YiI6IjEwMDAifQ.UUl3bFh5c2pDckFiQUdqUHBQcjV6cmgtWlFzOC1SWjhicmxvR1FoMk9jQQ', $tokenString);
+    }
+    public function testValidateBadToken()
+    {
+        $jwt = new EHJWT('jwtSecret');
+        $this->assertFalse($jwt->loadToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImF1ZCI6InVzZXIiLCJleHAiOiIxODg3NTI1MzE3IiwiaWF0IjoiMTAwMDAiLCJpc3MiOiJCcmFkQ2hlc25leS5jb20iLCJqdGkiOiI0IiwibG9jYXRpb24iOiJEYXZlbnBvcnQsIElvd2EiLCJuYmYiOiIwIiwic2V4IjoibWFsZSIsInN1YiI6IjEwMDAifQ.UUl3bFh5c2pDckFiQUdqUHBQcjV6cmgtWlFzOC1SWjhicmxvR1FoMk9jQ'));
     }
     public function testValidateExpiredToken()
     {
@@ -271,21 +275,21 @@ class ehjwtTest extends TestCase
         $jwt = new EHJWT('jwtSecret');
         $jwt->addOrUpdateJwtClaim('iss', 'BradChesney.com');
         $jwt->addOrUpdateJwtClaim('aud', 'user');
-        $this->expectException('\RuntimeException');
+        $this->expectException('RuntimeException');
         $jwt->loadToken("$encodedHeaders.$encodedPayload.$encodedSignature");
     }
     public function testBadHeader()
     {
-        $this->expectException('\RuntimeException');
+        $this->expectException('RuntimeException');
         $this->expectExceptionMessage('Encryption algorithm tampered with');
-        $jwt = new EHJWT();
+        $jwt = new EHJWT('jwtSecret');
         $jwt->loadToken('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzM4NCJ9.eyJhdWQiOiJ1c2VyIiwiaXNzIjoiQnJhZENoZXNuZXkuY29tIn0.R3NfZXdBdjhaQW1xMkpSc3E1d3p4NnE2M2F6WW55WFd4UGlrdDJtMUpPcw');
     }
     public function testIncompleteToken()
     {
-        $this->expectException('\RuntimeException');
+        $this->expectException('RuntimeException');
         $this->expectExceptionMessage('Token does not contain three delimited sections');
-        $jwt = new EHJWT();
+        $jwt = new EHJWT('jwtSecret');
         $jwt->loadToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1c2VyIiwiaXNzIjoiQnJhZENoZXNuZXkuY29tIn0');
     }
 }

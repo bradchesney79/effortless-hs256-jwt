@@ -47,13 +47,13 @@ class EHJWT
     //    public object $error;
 
     // methods
-    public function __construct(string $secret): bool
+    public function __construct(string $secret)
     {
         if (mb_strlen($secret) > 7) {
             $this->secret = $secret;
         }
         else {
-            throw new LogicException('Failure creating EHJWT instance, requires 8+ length secret: ');
+            throw new RuntimeException('Failure creating EHJWT instance, requires 8+ length secret: ');
         }
         return true;
     }
@@ -193,9 +193,7 @@ class EHJWT
         if ($this->loadToken($tokenString)) {
             $this->addOrUpdateJwtClaim('exp', $newUtcTimestampExpiration);
             $this->createToken();
-            return $this->getToken();
-        }
-    }
+            return $this->getToken();        }    }
 
     public function getToken(): string
     {
@@ -229,7 +227,7 @@ class EHJWT
     private function makeHmacHash(string $base64UrlHeader, string $base64UrlClaims): string
     {
         // sha256 is the only algorithm. sorry, not sorry.
-        return hash_hmac('sha256', $base64UrlHeader . '.' . $base64UrlClaims, $this->configurations['jwtSecret'], true);
+        return hash_hmac('sha256', $base64UrlHeader . '.' . $base64UrlClaims, $this->secret, true);
     }
 
     public function clearClaims(): void
