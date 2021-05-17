@@ -119,7 +119,8 @@ cloc --exclude-dir=vendor,build .
 
 11/2020 1,800
 12/2020 1,638
-05/2021 1,050
+05/2021 1,048
+
 ToDo:
 
 - Turn detection of RuntimeException tests to also test the exception message for specificity
