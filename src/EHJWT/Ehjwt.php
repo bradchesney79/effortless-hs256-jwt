@@ -193,7 +193,10 @@ class EHJWT
         if ($this->loadToken($tokenString)) {
             $this->addOrUpdateJwtClaim('exp', $newUtcTimestampExpiration);
             $this->createToken();
-            return $this->getToken();        }    }
+            return $this->getToken();
+        }
+        throw new RuntimeException('Token would not load');
+    }
 
     public function getToken(): string
     {

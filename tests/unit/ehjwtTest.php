@@ -182,6 +182,12 @@ class ehjwtTest extends TestCase
         $jwt = new EHJWT('jwtSecret');
         $this->assertFalse($jwt->loadToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImF1ZCI6InVzZXIiLCJleHAiOiIxODg3NTI1MzE3IiwiaWF0IjoiMTAwMDAiLCJpc3MiOiJCcmFkQ2hlc25leS5jb20iLCJqdGkiOiI0IiwibG9jYXRpb24iOiJEYXZlbnBvcnQsIElvd2EiLCJuYmYiOiIwIiwic2V4IjoibWFsZSIsInN1YiI6IjEwMDAifQ.UUl3bFh5c2pDckFiQUdqUHBQcjV6cmgtWlFzOC1SWjhicmxvR1FoMk9jQ'));
     }
+    public function testReissueBadToken()
+    {
+        $jwt = new EHJWT('jwtSecret');
+        $this->expectException('RuntimeException');
+        $jwt->reissueToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIzOSIsImF1ZCI6InVzZXIiLCJleHAiOiIxODg3NTI1MzE3IiwiaWF0IjoiMTAwMDAiLCJpc3MiOiJCcmFkQ2hlc25leS5jb20iLCJqdGkiOiI0IiwibG9jYXRpb24iOiJEYXZlbnBvcnQsIElvd2EiLCJuYmYiOiIwIiwic2V4IjoibWFsZSIsInN1YiI6IjEwMDAifQ.UUl3bFh5c2pDckFiQUdqUHBQcjV6cmgtWlFzOC1SWjhicmxvR1FoMk9jQ', $jwt->getUtcTime());
+    }
     public function testValidateExpiredToken()
     {
         $jwt = new EHJWT('jwtSecret');
