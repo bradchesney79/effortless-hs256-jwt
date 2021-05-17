@@ -4,7 +4,6 @@ use DateTime;
 use DateTimeZone;
 use Exception;
 use LogicException;
-use PDO;
 use RuntimeException;
 class EHJWT
 {
@@ -34,11 +33,11 @@ class EHJWT
      */
     private string $token = '';
     /**
-     * The config data.
+     * The JWT secret
      *
-     * @var array
+     * @var string
      */
-    protected $configurations = [];
+    protected $secret = '';
 
     //    /**
     //     * Error Object
@@ -47,79 +46,19 @@ class EHJWT
     //     */
     //    public object $error;
 
-    public $settingConfigurationNames = array(
-        'jwtSecret',
-        'dsn',
-        'dbUser',
-        'dbPassword'
-    );
-
-    public $envVarNames = array(
-        'EHJWT_JWT_SECRET',
-        'EHJWT_DSN',
-        'EHJWT_DB_USER',
-        'EHJWT_DB_PASS'
-    );
-
     // methods
-    public function __construct(string $secret = '', string $configFileNameWithPath = '', string $dsn = '', string $dbUser = '', string $dbPassword = '')
+    public function __construct(string $secret): bool
     {
-        try {
-            $this->setConfigurationsFromEnvVars();
-            if (mb_strlen($configFileNameWithPath) > 0) {
-                $this->setConfigurationsFromConfigFile($configFileNameWithPath);
-            }
-            $this->setConfigurationsFromArguments($secret, $dsn, $dbUser, $dbPassword);
-        } catch (Exception $e) {
-            throw new LogicException('Failure creating EHJWT object: ' . $e->getMessage(), 0);
+        if (mb_strlen($secret) > 7) {
+            $this->secret = $secret;
+        }
+        else {
+            throw new LogicException('Failure creating EHJWT instance, requires 8+ length secret: ');
         }
         return true;
     }
 
-    private function setConfigurationsFromEnvVars()
-    {
-
-        for ($i = 0; $i < count($this->envVarNames); $i++) {
-            $retrievedEnvironmentVariableValue = getenv($this->envVarNames[$i]);
-            if (mb_strlen($retrievedEnvironmentVariableValue) > 0) {
-                $this->configurations[$this->settingConfigurationNames[$i]] = $retrievedEnvironmentVariableValue;
-            }
-        }
-    }
-
-    private function setConfigurationsFromConfigFile(string $configFileWithPath)
-    {
-        if (file_exists($configFileWithPath)) {
-            $configFileSettings = require $configFileWithPath;
-            if (gettype($configFileSettings) !== 'array') {
-                throw new RuntimeException('EHJWT config file does not return an array');
-            }
-            if (count($configFileSettings) == 0) {
-                trigger_error('No valid configurations received from EHJWT config file', 8);
-            }
-            foreach ($this->settingConfigurationNames as $settingName) {
-                $retrievedConfigFileVariableValue = $configFileSettings[$settingName];
-                if (mb_strlen($retrievedConfigFileVariableValue) > 0) {
-                    $this->configurations[$settingName] = $retrievedConfigFileVariableValue;
-                }
-            }
-        }
-    }
-
-    private function setConfigurationsFromArguments(string $jwtSecret = '', string $dsn = '', string $dbUser = '', string $dbPassword = '')
-    {
-        foreach ($this->settingConfigurationNames as $settingName) {
-            $argumentValue = $
-            {
-            "$settingName"
-            };
-            if (mb_strlen($argumentValue) > 0) {
-                $this->configurations[$settingName] = $argumentValue;
-            }
-        }
-    }
-
-    public function addOrUpdateJwtClaim(string $key, $value, $requiredType = 'mixed')
+    public function addOrUpdateJwtClaim(string $key, $value, $requiredType = 'mixed'): bool
     {
         // ToDo: Needs more validation or something ...added utf8
         if (gettype($value) == $requiredType || $requiredType === 'mixed') {
@@ -132,7 +71,7 @@ class EHJWT
         throw new RuntimeException('Specified JWT claim required type mismatch');
     }
 
-    public function clearClaim(string $key)
+    public function clearClaim(string $key): bool
     {
         if (isset($key)) {
             unset($this->tokenClaims[$key]);
@@ -140,18 +79,18 @@ class EHJWT
         return true;
     }
 
-    private function jsonEncodeClaims()
+    private function jsonEncodeClaims(): string
     {
         return json_encode($this->tokenClaims, JSON_FORCE_OBJECT);
     }
 
-    private function createSignature($base64UrlHeader, $base64UrlClaims)
+    private function createSignature($base64UrlHeader, $base64UrlClaims): string
     {
         $jsonSignature = $this->makeHmacHash($base64UrlHeader, $base64UrlClaims);
         return $this->base64UrlEncode($jsonSignature);
     }
 
-    public function createToken()
+    public function createToken(): bool
     {
         // !!! ksort to maintain properties in repeatable order
         ksort($this->tokenClaims);
@@ -170,13 +109,13 @@ class EHJWT
         return true;
     }
 
-    public function getUtcTime()
+    public function getUtcTime(): int
     {
         $date = new DateTime('now', new DateTimeZone('UTC'));
         return $date->getTimestamp();
     }
 
-    public function loadToken(string $tokenString)
+    public function loadToken(string $tokenString): bool
     {
         $this->clearClaims();
         $this->token = $tokenString;
@@ -188,7 +127,7 @@ class EHJWT
         return false;
     }
 
-    public function validateToken()
+    public function validateToken(): bool
     {
         $tokenParts = $this->getTokenParts();
         $unpackedTokenPayload = $this->decodeTokenPayload($tokenParts[1]);
@@ -214,65 +153,24 @@ class EHJWT
                 throw new RuntimeException('Token issued before nbf header allows', 0);
             }
         }
-        if (mb_strlen($this->configurations['dbUser']) > 0 && mb_strlen($this->configurations['dbPassword']) > 0) {
-            if (strpos($this->configurations['dsn'], ':') === false) {
-                throw new RuntimeException('No valid DSN stored for connection to DB', 0);
-            }
-            try {
-                $dbh = $this->makeRevocationTableDatabaseConnection();
-            } catch (Exception $e) {
-                throw new RuntimeException('Cannot connect to the DB to check for revoked tokens and banned users', 0);
-            }
-            $lastCharacterOfJti = substr(strval($this->tokenClaims['jti']), -1);
-            // clean out revoked token records if the UTC unix time ends in '0'
-            if (0 == (intval($lastCharacterOfJti))) {
-                $this->revocationTableCleanup($utcTimeNow);
-            }
-            if (!isset($unpackedTokenPayload['sub'])) {
-                throw new RuntimeException("Subject standard claim not set to check ban status");
-            }
-            // ToDo: fix bind statement
-            $stmt = $dbh->prepare("SELECT * FROM revoked_ehjwt where sub = ?");
-            $stmt->bindParam(1, $unpackedTokenPayload['sub']);
-            // get records for this sub
-            if ($stmt->execute()) {
-                while ($row = $stmt->fetch()) {
-                    if ($row['jti'] == 0 && $row['exp'] > $utcTimeNow) {
-                        // user is under an unexpired ban condition
-                        return false;
-                    }
-                    if ($row['jti'] == $unpackedTokenPayload['jti']) {
-                        // token is revoked
-                        return false;
-                    }
-                    // remove records for expired tokens to keep the table small and snappy
-                    if ($row['exp'] < $utcTimeNow) {
-                        // deleteRevocation record
-                        $this->deleteRecordFromRevocationTable($row['id']);
-                    }
-                }
-            }
+
+        if (!isset($unpackedTokenPayload['sub'])) {
+            throw new RuntimeException("Subject standard claim not set to check ban status");
         }
+
         $this->createToken();
         $recreatedToken = $this->getToken();
         $recreatedTokenParts = explode('.', $recreatedToken);
         $recreatedTokenSignature = $recreatedTokenParts[2];
         if ($recreatedTokenSignature !== $tokenParts['2']) {
-            // 'signature invalid, potential tampering
+            //Signature invalid, potential tampering
             return false;
         }
         // the token checks out!
         return true;
     }
 
-    public function revocationTableCleanup(int $utcTimeStamp)
-    {
-        $dbh = $this->makeRevocationTableDatabaseConnection();
-        $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE `exp` <= $utcTimeStamp");
-        $stmt->execute();
-    }
-
-    private function getTokenParts()
+    private function getTokenParts(): array
     {
         $tokenParts = explode('.', $this->token);
         if ($this->verifyThreeMembers($tokenParts)) {
@@ -281,7 +179,7 @@ class EHJWT
         throw new RuntimeException('Token does not contain three delimited sections', 0);
     }
 
-    private function verifyThreeMembers(array $array)
+    private function verifyThreeMembers(array $array): bool
     {
         if (3 !== count($array)) {
             // 'Incorrect quantity of segments'
@@ -290,36 +188,21 @@ class EHJWT
         return true;
     }
 
-    private function makeRevocationTableDatabaseConnection()
-    {
-        return new PDO($this->configurations['dsn'], $this->configurations['dbUser'], $this->configurations['dbPassword'], array(
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NAMED
-        ));
-    }
-
-    private function deleteRecordFromRevocationTable(string $recordId)
-    {
-        $dbh = $this->makeRevocationTableDatabaseConnection();
-        $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE id = ?");
-        $stmt->bindParam(1, $recordId);
-        return $stmt->execute();
-    }
-
-    public function reissueToken(string $tokenString, int $newUtcTimestampExpiration)
+    public function reissueToken(string $tokenString, int $newUtcTimestampExpiration): string
     {
         if ($this->loadToken($tokenString)) {
             $this->addOrUpdateJwtClaim('exp', $newUtcTimestampExpiration);
             $this->createToken();
+            return $this->getToken();
         }
-        return;
     }
 
-    public function getToken()
+    public function getToken(): string
     {
         return $this->token;
     }
 
-    private function decodeTokenPayload($jwtPayload)
+    private function decodeTokenPayload($jwtPayload): array
     {
         $decodedPayload = json_decode($this->base64UrlDecode($jwtPayload), true);
         if (0 !== json_last_error()) {
@@ -328,94 +211,29 @@ class EHJWT
         return $decodedPayload;
     }
 
-    public function getTokenClaims()
+    public function getTokenClaims(): array
     {
         return $this->tokenClaims;
     }
 
-    private function base64UrlEncode(string $unencodedString)
+    private function base64UrlEncode(string $unencodedString): string
     {
         return rtrim(strtr(base64_encode($unencodedString), '+/', '-_'), '=');
     }
 
-    private function base64UrlDecode(string $base64UrlEncodedString)
+    private function base64UrlDecode(string $base64UrlEncodedString): string
     {
         return base64_decode(str_pad(strtr($base64UrlEncodedString, '-_', '+/'), mb_strlen($base64UrlEncodedString) % 4, '=', STR_PAD_RIGHT));
     }
 
-    private function makeHmacHash(string $base64UrlHeader, string $base64UrlClaims)
+    private function makeHmacHash(string $base64UrlHeader, string $base64UrlClaims): string
     {
         // sha256 is the only algorithm. sorry, not sorry.
         return hash_hmac('sha256', $base64UrlHeader . '.' . $base64UrlClaims, $this->configurations['jwtSecret'], true);
     }
 
-    public function clearClaims()
+    public function clearClaims(): void
     {
         $this->tokenClaims = [];
     }
-
-    public function revokeToken()
-    {
-        // only add if the token is valid-- don't let imposters kill otherwise valid tokens
-        if ($this->validateToken()) {
-            $revocationExpiration = (int)$this->tokenClaims['exp'] + 30;
-            $this->writeRecordToRevocationTable($revocationExpiration);
-        }
-    }
-
-    public function banUser(string $utcUnixTimestampBanExpiration)
-    {
-        $banExp = (int)$this->tokenClaims['exp'] + 60;
-        // insert jti of 0, sub... the userId to ban, and UTC Unix epoch of ban end
-        $this->writeRecordToRevocationTable($utcUnixTimestampBanExpiration, true);
-    }
-
-    public function permabanUser()
-    {
-        // insert jti of 0, sub... the userId to ban, and UTC Unix epoch of ban end-- Tuesday after never
-        $this->writeRecordToRevocationTable(4294967295, true);
-    }
-
-    public function unbanUser()
-    {
-        $this->deleteRecordsFromRevocationTable();
-    }
-
-    private function writeRecordToRevocationTable(int $exp, bool $ban = false)
-    {
-        $userBanJtiPlaceholder = 0;
-        $dbh = $this->makeRevocationTableDatabaseConnection();
-        $stmt = $dbh->prepare("INSERT INTO revoked_ehjwt (jti, sub, exp) VALUES (?, ?, ?)");
-        $stmt->bindParam(1, $this->tokenClaims['jti']);
-        if ($ban) {
-            $stmt->bindParam(1, $userBanJtiPlaceholder);
-        }
-        $stmt->bindParam(2, $this->tokenClaims['sub']);
-        $stmt->bindParam(3, $exp);
-
-        return $stmt->execute();
-    }
-
-    private function deleteRecordsFromRevocationTable()
-    {
-        $dbh = $this->makeRevocationTableDatabaseConnection();
-        $stmt = $dbh->prepare("DELETE FROM revoked_ehjwt WHERE sub = ? AND jti = 0");
-        $stmt->bindParam(1, $this->tokenClaims['sub']);
-        return $stmt->execute();
-    }
-    // ToDo: Provide access to a list of banned users
-    public function retrieveBannedUsers()
-    {
-        $bannedUsers = array();
-
-        $dbh = $this->makeRevocationTableDatabaseConnection();
-
-        $stmt = $dbh->query('SELECT * FROM revoked_ehjwt WHERE `jti` = 0');
-
-        if ($stmt->execute()) {
-            while ($row = $stmt->fetch()) {
-                $bannedUsers[] = $row;
-            }
-            return $bannedUsers;
-        }
-    }}
+}
