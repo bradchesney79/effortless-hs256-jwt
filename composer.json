@@ -26,12 +26,12 @@
     },
     "autoload": {
         "psr-4": {
-            "bradchesney79\\Ehjwt\\": "src/"
+            "BradChesney79\\EHJWT\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "bradchesney79\\Ehjwt\\Test\\": "tests/"
+            "BradChesney79\\EHJWT\\Test\\": "tests/"
         }
     },
     "license": "Unlicense",
