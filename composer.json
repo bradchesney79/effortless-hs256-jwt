@@ -19,7 +19,7 @@
         "phpunit/php-code-coverage": "^9",
         "phpmd/phpmd" : "^2.9",
         "phpunit/phpunit": "^9",
-        "phpstan/phpstan": "^0"
+        "phpstan/phpstan": "^1"
     },
     "suggest": {
         "ext-phpdbg": "^0"
